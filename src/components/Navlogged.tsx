@@ -1,18 +1,21 @@
 import React from "react";
 import Avatar from "../assets/img/defAvatar.svg";
 import ChevDown from "../assets/img/chevronD.svg";
+import { Link } from "react-router-dom";
 
 const Navlogged = () => {
   return (
-    <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] flex items-center pl-5 fixed z-50">
-      <div className="flex w-2/4">
-        <h1 className="poppins-extrabold text-3xl text-[#ff0000]">SPAID</h1>
-        <h1 className="poppins-extrabold text-3xl text-[#ff8c00]">LEARN</h1>
+    <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] bg-white flex items-center pl-5 fixed z-50">
+      <div className="flex w-2/4 ">
+        <Link to="/" className="flex">
+          <h1 className="poppins-extrabold text-3xl text-[#ff0000]">SPAID</h1>
+          <h1 className="poppins-extrabold text-3xl text-[#ff8c00]">LEARN</h1>
+        </Link>
       </div>
       <div className="w-2/4  h-full flex justify-end items-center">
-        <a href="/Courses" className="poppins-regular">
+        <Link to="/Courses" className="poppins-regular">
           Courses
-        </a>
+        </Link>
         <a
           href="#"
           className=" h-11 w-35 rounded-xl bg-[#f5f5f5] flex px-3 justify-between items-center mx-8"

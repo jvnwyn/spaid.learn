@@ -1,13 +1,14 @@
 import React from "react";
 import Avatarcard from "../assets/img/defAvatar.svg";
+import { Link } from "react-router-dom";
 
 const LearnersCard = () => {
   return (
     <div className="h-screen ">
       <div className="w-[420px] h-[170px] border-1 border-[rgba(0,0,0,0.25)] absolute right-15 top-25 flex">
         <div className="w-[150px] h-full  flex flex-col border-r-1 border-[rgba(0,0,0,0.25)]">
-          <a
-            href="#"
+          <Link
+            to="/AccountSetting"
             className="h-full flex flex-col justify-center items-center "
           >
             <img
@@ -21,7 +22,7 @@ const LearnersCard = () => {
                 Learner
               </p>
             </div>
-          </a>
+          </Link>
         </div>
         <div className="w-[270px] h-full bg-[#f5f5f5] flex flex-col justify-between items-center">
           <div className="w-full h-10/21  flex flex-col justify-center px-4">
