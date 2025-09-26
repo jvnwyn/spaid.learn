@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import Glogo from "../assets/img/gLogo.svg";
 import Flogo from "../assets/img/fLogo.svg";
-import { div } from "framer-motion/client";
-import supabase from "../config/supabaseClient";
 
 const Login = () => {
   const [isVisible, setIsVisible] = useState(false);
