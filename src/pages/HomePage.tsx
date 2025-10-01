@@ -1,4 +1,3 @@
-import React from "react";
 import RecoCourse from "../components/RecoCourse";
 import Review from "../components/Review";
 import QrCom from "../components/QrCom";

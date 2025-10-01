@@ -1,6 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Glogo from "../assets/img/gLogo.svg";
 import Flogo from "../assets/img/fLogo.svg";
+import supabase from "../config/supabaseClient";
+
+const handleGoogleLogin = async () => {
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+};
 
 const Login = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -33,6 +43,7 @@ const Login = () => {
               <div className="w-full h-10 flex items-center justify-center gap-2 pt-2">
                 <a
                   href="#"
+                  onClick={handleGoogleLogin}
                   className="w-10 h-10 rounded-xl border-1 border-[rgba(0,0,0,0.25)] flex justify-center items-center"
                 >
                   <img src={Glogo} alt="Google" className="w-7 h-7" />
@@ -94,7 +105,7 @@ const Login = () => {
                   className="text-[10px] text-[#013F5E] hover:underline cursor-pointer "
                   onClick={() => setIsVisible(!isVisible)}
                 >
-                  Sign up now
+                  Sign up 
                 </button>
               </div>
             </div>
@@ -168,7 +179,7 @@ const Login = () => {
                   className="text-[10px] text-[#013F5E] hover:underline cursor-pointer "
                   onClick={() => setIsVisible(!isVisible)}
                 >
-                  Sign in now
+                  Sign in
                 </button>
               </div>
             </div>
