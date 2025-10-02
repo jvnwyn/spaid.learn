@@ -1,19 +1,22 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Glogo from "../assets/img/gLogo.svg";
 import Flogo from "../assets/img/fLogo.svg";
 import supabase from "../config/supabaseClient";
 
-const handleGoogleLogin = async () => {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin,
-    },
-  });
-};
 
 const Login = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+  };
   return (
     <>
       <div className="min-h-screen w-full flex justify-center items-center bg-white px-2 py-8">
