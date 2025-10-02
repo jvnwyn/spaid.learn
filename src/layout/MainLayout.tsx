@@ -1,28 +1,33 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { data, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import supabase from "../config/supabaseClient";
 import Navlogged from "../components/Navlogged";
-import type {User} from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 const MainLayout = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data}) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
 
       if (data.user) {
         navigate("/Home");
       }
 
+      if (!data.user) {
+        navigate("/");
+      }
+
       if (data.user) {
-        const { data: profile} = await supabase
+        const { data: profile } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", data.user.id)
           .single();
-        
+        console.log(user);
+
         if (!profile) {
           await supabase.from("profiles").insert([
             {
@@ -31,14 +36,14 @@ const MainLayout = () => {
               role: "student",
             },
           ]);
-        }  
+        }
       }
     });
   }, []);
 
   return (
     <>
-      <Navlogged />
+      <Navlogged userData={user?.id} />
       <Outlet />
     </>
   );
