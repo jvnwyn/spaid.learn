@@ -81,12 +81,12 @@ const Login = () => {
     .eq("email", email);
 
     if (fetchError) {
-      setError("Error fetching user data");
+      setError("Incorrect email or password");
       return;
     }
 
     if (!users || users.length === 0) {
-      setError("No user found with this email");
+      setError("Incorrect email or password");
       return;
     }
 
@@ -96,7 +96,7 @@ const Login = () => {
     });
 
     if (signInError) {
-      setError("Error signing in: " + signInError.message);
+      setError("Incorrect email or password");
       return;
     }
 
