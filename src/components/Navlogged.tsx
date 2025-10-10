@@ -2,13 +2,28 @@ import Avatar from "../assets/img/defAvatar.svg";
 import ChevDown from "../assets/img/chevronD.svg";
 import { Link } from "react-router-dom";
 import DropdownMenu from "./DropdownMenu";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import supabase from "../config/supabaseClient";
 
 const Navlogged = () => {
   const token = JSON.parse(sessionStorage.getItem("token"));
-
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    }
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
+
   return (
     <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] bg-white flex items-center pl-5 fixed z-50 ">
       <div className="flex w-2/4 ">
@@ -53,7 +68,12 @@ const Navlogged = () => {
           </div>
         </>
       )}
-      {showMenu && <DropdownMenu />}
+      {/* Attach ref to DropdownMenu */}
+      {showMenu && (
+        <div ref={menuRef}>
+          <DropdownMenu />
+        </div>
+      )}
     </nav>
   );
 };

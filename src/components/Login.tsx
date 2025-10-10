@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Glogo from "../assets/img/gLogo.svg";
 import Flogo from "../assets/img/fLogo.svg";
 import supabase from "../config/supabaseClient";
@@ -209,9 +209,12 @@ const Login = ({ setToken }) => {
                     </label>
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#013f5e] cursor-pointer hover:underline">
+                    <Link
+                      to="/reset"
+                      className="text-[10px] text-[#013f5e] cursor-pointer hover:underline"
+                    >
                       forget password?
-                    </p>
+                    </Link>
                   </div>
                 </div>
                 {loginSuccess && (

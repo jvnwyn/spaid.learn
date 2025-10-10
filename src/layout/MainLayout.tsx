@@ -27,8 +27,17 @@ const MainLayout = () => {
         navigate("/Home", { replace: true });
       }
 
+      // Prevent logged in users from accessing /reset
+      if (user && location.pathname === "/reset") {
+        navigate("/Home", { replace: true });
+      }
+
       // Redirect unauthenticated users to "/" (login)
-      if (!user && location.pathname !== "/") {
+      if (
+        !user &&
+        location.pathname !== "/" &&
+        location.pathname !== "/reset"
+      ) {
         setUser(null);
         navigate("/", { replace: true });
       }

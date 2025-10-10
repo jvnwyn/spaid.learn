@@ -11,6 +11,8 @@ import AccountSettingPage from "./pages/AccountSettingPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import Login from "./components/Login";
 import { useState, useEffect } from "react";
+import ForgetPass from "./pages/ForgetPass";
+import PassRecover from "./pages/PassRecover";
 
 function App() {
   const [token, setToken] = useState(false);
@@ -34,6 +36,8 @@ function App() {
           element={<AccountSettingPage token={token} />}
         />
         <Route path="*" element={<NotFoundPage />} />
+        <Route path="/reset" element={<ForgetPass />} />
+        <Route path="/passRecover" element={<PassRecover />} />
       </Route>
     )
   );
