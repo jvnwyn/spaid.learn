@@ -4,7 +4,7 @@ import { FaPencilAlt, FaCamera } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
 
 const AccountProf = () => {
-  const token = JSON.parse(sessionStorage.getItem("token"));
+  const token = JSON.parse(sessionStorage.getItem("token") || "null");
 
   const [role, setRole] = useState<string | null>(null);
 
@@ -13,10 +13,10 @@ const AccountProf = () => {
       if (!token?.user?.id) return;
 
       const { data, error } = await supabase
-        .from("profiles") // 👈 make sure your table name is correct
+        .from("profiles")
         .select("role")
         .eq("id", token.user.id)
-        .single(); // since IDs are unique
+        .single();
 
       if (error) {
         console.error("Error fetching role:", error.message);

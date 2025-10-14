@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../config/supabaseClient";
 
 const Navlogged = () => {
-  const token = JSON.parse(sessionStorage.getItem("token"));
+  const token = JSON.parse(sessionStorage.getItem("token") || "null");
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 

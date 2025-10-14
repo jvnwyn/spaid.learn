@@ -1,5 +1,3 @@
-import React from "react";
-
 const RecoCourse = () => {
   return (
     <div className="w-full flex flex-col px-4 md:px-20 pt-8 md:pt-25 gap-5">
