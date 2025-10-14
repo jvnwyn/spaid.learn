@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Avatarcard from "../assets/img/defAvatar.svg";
 import { Link } from "react-router-dom";
 
@@ -23,7 +23,7 @@ const LearnersCard = () => {
   }, []);
 
   return (
-    <div className="w-full  flex flex-col md:px-20 gap-6 items-center lg:items-start lg:mt-25 py-4  lg:ml-[-100px] ">
+    <div className="w-full lg:px-10 flex flex-col md:px-20 gap-6 items-center lg:items-start lg:mt-25 py-4  lg:ml-[-100px] ">
       {/* Profile Card */}
       <div className="w-full  lg:max-w-md hidden border-1 border-[rgba(0,0,0,0.25)] md:flex  overflow-hidden bg-white">
         <div className="w-2/5 flex flex-col border-r-1 border-[rgba(0,0,0,0.25)]">

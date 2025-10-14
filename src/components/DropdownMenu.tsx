@@ -16,7 +16,7 @@ const DropdownMenu = () => {
       <ul className="p-2 md:p-3 flex flex-col gap-3 md:gap-5 items-center">
         <li>
           <Link
-            to=""
+            to="/AccountSetting"
             className="px-4 md:px-8 py-2 md:py-3 w-full  text-center rounded-md text-base md:text-lg"
           >
             PROFILE
