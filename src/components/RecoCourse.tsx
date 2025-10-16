@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const RecoCourse = () => {
   return (
     <div className="w-full flex flex-col px-4 md:px-20 pt-8 md:pt-25 gap-5">
@@ -10,9 +12,12 @@ const RecoCourse = () => {
             Listening is the ability to accurately receive and interpret
             messages
           </h1>
-          <button className="bg-white w-full md:w-50 h-10 border-1 border-[rgba(0,0,0,0.25)] rounded-xl cursor-pointer mt-2 md:mt-0">
+          <Link
+            to="/course"
+            className="bg-white w-full md:w-50 h-10 border-1 border-[rgba(0,0,0,0.25)] flex justify-center items-center rounded-xl cursor-pointer mt-2 md:mt-0"
+          >
             Start Learning Now
-          </button>
+          </Link>
         </div>
       </div>
     </div>

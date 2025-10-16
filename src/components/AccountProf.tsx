@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Avatarcard from "../assets/img/defAvatar.svg";
 import { FaPencilAlt, FaCamera } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
+import { Link } from "react-router-dom";
 
 const AccountProf = () => {
   const token = JSON.parse(sessionStorage.getItem("token") || "null");
@@ -46,9 +47,12 @@ const AccountProf = () => {
                 token?.user?.user_metadata?.name}
             </h1>
             {role === "instructor" && (
-              <button className=" ml-2 flex bg-[#f5f5f5] w-30 justify-center items-center h-10 rounded-md cursor-pointer">
+              <Link
+                to="/add-course"
+                className=" ml-2 flex bg-[#f5f5f5] w-30 justify-center items-center h-10 rounded-md cursor-pointer"
+              >
                 Add Course
-              </button>
+              </Link>
             )}
             <FaCamera className="text-[#989898] text-3xl absolute bottom-5 left-25 md:bottom-0 md:left-27" />
           </div>

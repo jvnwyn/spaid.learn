@@ -13,6 +13,8 @@ import Login from "./components/Login";
 import { useState, useEffect } from "react";
 import ForgetPass from "./pages/ForgetPass";
 import PassRecover from "./pages/PassRecover";
+import AddCoursePage from "./pages/AddCoursePage";
+import CoursePage from "./pages/CoursePage";
 
 function App() {
   const router = createBrowserRouter(
@@ -24,6 +26,8 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/reset" element={<ForgetPass />} />
         <Route path="/passRecover" element={<PassRecover />} />
+        <Route path="/add-course" element={<AddCoursePage />} />
+        <Route path="/course" element={<CoursePage />} />
       </Route>
     )
   );
