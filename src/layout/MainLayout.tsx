@@ -9,6 +9,7 @@ const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+<<<<<<< HEAD
   async function generateUniqueUsername() {
     for (let i = 0; i < 10; i++) {
       const candidate = "user" + Math.floor(1000 + Math.random() * 9000);
@@ -29,6 +30,31 @@ const MainLayout = () => {
       setUser(authUser);
 
       if (authUser) {
+=======
+  useEffect(() => {
+    // Initial session / user setup
+    supabase.auth.getSession().then(async ({ data }) => {
+      const session = data?.session;
+      const user = session?.user || null;
+      setUser(user);
+
+      // keep redirects and profile creation as before
+      if (user && location.pathname === "/") {
+        navigate("/Home", { replace: true });
+      }
+      if (user && location.pathname === "/reset") {
+        navigate("/Home", { replace: true });
+      }
+      if (
+        !user &&
+        location.pathname !== "/" &&
+        location.pathname !== "/reset"
+      ) {
+        setUser(null);
+        navigate("/", { replace: true });
+      }
+      if (user) {
+>>>>>>> 775d3de (added some loading screen)
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
@@ -60,11 +86,31 @@ const MainLayout = () => {
           navigate("/", { replace: true });
         }
       }
+<<<<<<< HEAD
 
       if (authUser && location.pathname === "/") {
         navigate("/Home", { replace: true });
       }
     })();
+=======
+    });
+
+    // Listen for auth changes and set/remove token when user signs in/out
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN") {
+          sessionStorage.setItem("token", JSON.stringify(session));
+        } else if (event === "SIGNED_OUT") {
+          sessionStorage.removeItem("token");
+        }
+      }
+    );
+
+    return () => {
+      // cleanup auth listener
+      authListener?.subscription?.unsubscribe?.();
+    };
+>>>>>>> 775d3de (added some loading screen)
   }, [location.pathname, navigate]);
 
   return (
