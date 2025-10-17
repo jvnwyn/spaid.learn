@@ -10,16 +10,13 @@ const MainLayout = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // Initial session / user setup
     supabase.auth.getSession().then(async ({ data }) => {
       const session = data?.session;
       const user = session?.user || null;
       setUser(user);
 
-      if (session) {
-        sessionStorage.setItem("token", JSON.stringify(session));
-      } else {
-        sessionStorage.removeItem("token");
-      }
+      // keep redirects and profile creation as before
       if (user && location.pathname === "/") {
         navigate("/Home", { replace: true });
       }
@@ -52,6 +49,22 @@ const MainLayout = () => {
         }
       }
     });
+
+    // Listen for auth changes and set/remove token when user signs in/out
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN") {
+          sessionStorage.setItem("token", JSON.stringify(session));
+        } else if (event === "SIGNED_OUT") {
+          sessionStorage.removeItem("token");
+        }
+      }
+    );
+
+    return () => {
+      // cleanup auth listener
+      authListener?.subscription?.unsubscribe?.();
+    };
   }, [location.pathname, navigate]);
 
   return (

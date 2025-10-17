@@ -21,6 +21,7 @@ const LearnersCard = () => {
       setToken(null);
     }
   }, []);
+  console.log("Token in LearnersCard:", token);
 
   return (
     <div className="w-full lg:px-10 flex flex-col md:px-20 gap-6 items-center lg:items-start lg:mt-25 py-4  lg:ml-[-100px] ">
@@ -38,7 +39,8 @@ const LearnersCard = () => {
             />
             <div className="flex flex-col justify-center items-center mt-2">
               <h1 className="text-lg">
-                {token?.user?.user_metadata?.full_name.split(" ")[0]}
+                {token?.user?.user_metadata?.full_name.split(" ")[0] ||
+                  token?.user?.user_metadata?.name}
               </h1>
               <p className="text-xs text-[#403F3F] border-1 border-[rgba(0,0,0,0.25)] px-2 rounded-3xl">
                 Learner

@@ -1,21 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
-import { div } from "framer-motion/client";
 
 const AccountSettCourses = () => {
-  const token = JSON.parse(sessionStorage.getItem("token") || "null");
-
   const [role, setRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Read token once on mount to derive a stable userId
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("token");
+      const parsed = raw ? JSON.parse(raw) : null;
+      setUserId(parsed?.user?.id ?? null);
+    } catch {
+      setUserId(null);
+    }
+  }, []);
+
+  // Fetch role when userId is available (stable dependency)
   useEffect(() => {
     async function fetchUserRole() {
-      if (!token?.user?.id) return;
+      setLoading(true);
+      if (!userId) {
+        setRole(null);
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("profiles")
         .select("role")
-        .eq("id", token.user.id)
+        .eq("id", userId)
         .single();
 
       if (error) {
@@ -23,10 +39,37 @@ const AccountSettCourses = () => {
       } else {
         setRole(data?.role || null);
       }
+      setLoading(false);
     }
 
     fetchUserRole();
-  }, [token]);
+  }, [userId]);
+
+  if (loading) {
+    // Skeleton while loading
+    return (
+      <div className="p-8 md:px-15 lg:px-30">
+        <div className="w-full gap-5 md:gap-10 flex flex-col md:flex-row justify-between bg-[#f5f5f5] rounded-xl md:p-5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex-1 px-3 flex flex-col justify-between">
+              <div>
+                <div className="h-6 bg-gray-300 rounded w-1/2 mb-3 animate-pulse" />
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 bg-gray-300 rounded w-full animate-pulse" />
+                  <div className="h-4 bg-gray-300 rounded w-5/6 animate-pulse" />
+                  <div className="h-4 bg-gray-300 rounded w-4/6 animate-pulse" />
+                </div>
+              </div>
+              <div className="flex justify-end mt-3">
+                <div className="h-4 bg-gray-300 rounded w-24 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 md:px-15 lg:px-30">
       <div className="w-full gap-5 md:gap-10  flex flex-col md:flex-row justify-between bg-[#f5f5f5] rounded-xl md:p-5">

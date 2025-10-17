@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const CourseHeader = () => (
   <div>
@@ -11,9 +12,12 @@ const CourseHeader = () => (
           MEETING THE FAMILIES OF NUMBERS
         </div>
       </div>
-      <button className="px-6 py-2 border border-[rgba(0,0,0,0.25)] rounded-lg cursor-pointer text-sm bg-white hover:bg-gray-100 self-start md:self-end">
+      <Link
+        to="/view-course"
+        className="px-6 py-2 border border-[rgba(0,0,0,0.25)] rounded-lg cursor-pointer text-sm bg-white hover:bg-gray-100 self-start md:self-end"
+      >
         Start Learning Now
-      </button>
+      </Link>
     </div>
   </div>
 );
