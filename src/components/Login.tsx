@@ -67,15 +67,16 @@ const Login = () => {
           username: randomUsername,
           created_at: new Date().toISOString(),
         },
-        { onConflict: "id" },
+        { onConflict: "id" }
       );
     } else {
-      localStorage.setItem("pending_username", randomUsername);
+      // store pending_username in sessionStorage, not localStorage
+      sessionStorage.setItem("pending_username", randomUsername);
     }
     setRegisterError("");
     setIsVisible(false);
   };
-  
+
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -96,22 +97,23 @@ const Login = () => {
     });
 
     if (error) {
-    const msg = error.message.toLowerCase();
+      const msg = error.message.toLowerCase();
       if (msg.includes("confirm") || msg.includes("verify")) {
-        setLoginSuccess("Login successful! Please check your email to verify your account.");
+        setLoginSuccess(
+          "Login successful! Please check your email to verify your account."
+        );
         setError("");
       } else {
         setError("Incorrect email or password");
       }
-    return;
+      return;
     }
 
     const user = data?.user ?? data?.session?.user;
     if (!user) {
-    setError("Incorrect email or password");
-    return;
+      setError("Incorrect email or password");
+      return;
     }
-
 
     setTimeout(() => {
       navigate("/Home");
@@ -209,7 +211,7 @@ const Login = () => {
                   >
                     Remember me
                   </label>
-                </div>         
+                </div>
                 {loginSuccess && (
                   <div className="text-green-600 text-xs">{loginSuccess}</div>
                 )}
