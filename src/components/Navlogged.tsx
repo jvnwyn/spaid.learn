@@ -3,21 +3,24 @@ import ChevDown from "../assets/img/chevronD.svg";
 import { Link } from "react-router-dom";
 import DropdownMenu from "./DropdownMenu";
 import { useState, useEffect, useRef } from "react";
-import supabase from "../config/supabaseClient";
 
 const Navlogged = () => {
   const token = JSON.parse(sessionStorage.getItem("token") || "null");
   const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node | null;
+      if (menuRef.current && target && !menuRef.current.contains(target)) {
         setShowMenu(false);
       }
     }
     if (showMenu) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
   }, [showMenu]);
 

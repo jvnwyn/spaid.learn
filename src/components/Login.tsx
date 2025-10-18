@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import Glogo from "../assets/img/gLogo.svg";
 import Flogo from "../assets/img/fLogo.svg";
 import supabase from "../config/supabaseClient";
@@ -57,22 +57,25 @@ const Login = () => {
       return;
     }
 
-    if (data.user) {
-      await supabase.from("profiles").insert([
+    const user = data?.user ?? data?.session?.user;
+
+    if (user?.id) {
+      await supabase.from("profiles").upsert(
         {
-          id: data.user.id,
+          id: user.id,
           role: "student",
           username: randomUsername,
+          created_at: new Date().toISOString(),
         },
-      ]);
+        { onConflict: "id" },
+      );
+    } else {
+      localStorage.setItem("pending_username", randomUsername);
     }
-    // Clear registration fields after successful signup
-    setRegisterEmail("");
-    setRegisterPassword("");
-    setRegisterConfirmPassword("");
+    setRegisterError("");
     setIsVisible(false);
   };
-
+  
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -87,25 +90,28 @@ const Login = () => {
     setError("");
     setLoginSuccess("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      if (
-        error.message.toLowerCase().includes("confirm") ||
-        error.message.toLowerCase().includes("verify")
-      ) {
-        setLoginSuccess(
-          "Login successful! Please check your email to verify your account."
-        );
+    const msg = error.message.toLowerCase();
+      if (msg.includes("confirm") || msg.includes("verify")) {
+        setLoginSuccess("Login successful! Please check your email to verify your account.");
         setError("");
       } else {
         setError("Incorrect email or password");
       }
-      return;
+    return;
     }
+
+    const user = data?.user ?? data?.session?.user;
+    if (!user) {
+    setError("Incorrect email or password");
+    return;
+    }
+
 
     setTimeout(() => {
       navigate("/Home");
@@ -195,25 +201,15 @@ const Login = () => {
                     />
                   )}
                 </div>
-                <div className="flex items-center justify-between px-2 ">
-                  <div className="flex items-center">
-                    <input type="checkbox" name="" id="remember" />
-                    <label
-                      htmlFor="remember"
-                      className="text-[10px] poppins-regular px-1"
-                    >
-                      Remember me
-                    </label>
-                  </div>
-                  <div>
-                    <Link
-                      to="/reset"
-                      className="text-[10px] text-[#013f5e] cursor-pointer hover:underline"
-                    >
-                      forget password?
-                    </Link>
-                  </div>
-                </div>
+                <div className="flex items-center px-2">
+                  <input type="checkbox" name="" id="remember" />
+                  <label
+                    htmlFor="remember"
+                    className="text-[10px] poppins-regular px-1"
+                  >
+                    Remember me
+                  </label>
+                </div>         
                 {loginSuccess && (
                   <div className="text-green-600 text-xs">{loginSuccess}</div>
                 )}

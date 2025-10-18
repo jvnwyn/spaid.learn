@@ -9,62 +9,62 @@ const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    // Initial session / user setup
-    supabase.auth.getSession().then(async ({ data }) => {
-      const session = data?.session;
-      const user = session?.user || null;
-      setUser(user);
+  async function generateUniqueUsername() {
+    for (let i = 0; i < 10; i++) {
+      const candidate = "user" + Math.floor(1000 + Math.random() * 9000);
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", candidate)
+        .limit(1);
+      if (!existing || (Array.isArray(existing) && existing.length === 0)) return candidate;
+    }
+    return "user" + Date.now().toString().slice(-4);
+  }
 
-      // keep redirects and profile creation as before
-      if (user && location.pathname === "/") {
-        navigate("/Home", { replace: true });
-      }
-      if (user && location.pathname === "/reset") {
-        navigate("/Home", { replace: true });
-      }
-      if (
-        !user &&
-        location.pathname !== "/" &&
-        location.pathname !== "/reset"
-      ) {
-        setUser(null);
-        navigate("/", { replace: true });
-      }
-      if (user) {
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const authUser = data?.user ?? null;
+      setUser(authUser);
+
+      if (authUser) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", authUser.id)
           .single();
 
         if (!profile) {
-          await supabase.from("profiles").insert([
+          let username = localStorage.getItem("pending_username") ?? null;
+          if (!username) {
+            username = authUser.user_metadata?.full_name ??
+                       authUser.user_metadata?.name ??
+                       (await generateUniqueUsername());
+          }
+
+          await supabase.from("profiles").upsert(
             {
-              id: user.id,
-              name: user.user_metadata.full_name,
+              id: authUser.id,
+              username,
               role: "student",
+              created_at: new Date().toISOString(),
             },
-          ]);
+            { onConflict: "id" }
+          );
+
+          localStorage.removeItem("pending_username");
+        }
+      } else {
+        if (location.pathname !== "/" && location.pathname !== "/reset") {
+          navigate("/", { replace: true });
         }
       }
-    });
 
-    // Listen for auth changes and set/remove token when user signs in/out
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_IN") {
-          sessionStorage.setItem("token", JSON.stringify(session));
-        } else if (event === "SIGNED_OUT") {
-          sessionStorage.removeItem("token");
-        }
+      if (authUser && location.pathname === "/") {
+        navigate("/Home", { replace: true });
       }
-    );
-
-    return () => {
-      // cleanup auth listener
-      authListener?.subscription?.unsubscribe?.();
-    };
+    })();
   }, [location.pathname, navigate]);
 
   return (
