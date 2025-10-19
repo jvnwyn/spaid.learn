@@ -3,11 +3,39 @@ import ChevDown from "../assets/img/chevronD.svg";
 import { Link } from "react-router-dom";
 import DropdownMenu from "./DropdownMenu";
 import { useState, useEffect, useRef } from "react";
+import supabase from "../config/supabaseClient";
 
 const Navlogged = () => {
   const token = JSON.parse(sessionStorage.getItem("token") || "null");
   const [showMenu, setShowMenu] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const userId = token?.user?.id;
+        if (!userId) {
+          if (mounted) setRole(null);
+          return;
+        }
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        if (!error && mounted) setRole(profile?.role ?? "Learner");
+        if (error && mounted) setRole("Learner");
+      } catch {
+        if (mounted) setRole("Learner");
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [token?.user?.id]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -23,6 +51,11 @@ const Navlogged = () => {
       };
     }
   }, [showMenu]);
+
+  const firstName =
+    token?.user?.user_metadata?.full_name
+      ? token.user.user_metadata.full_name.split(" ")[0]
+      : token?.user?.user_metadata?.name ?? "User";
 
   return (
     <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] bg-white flex items-center pl-5 fixed z-50 ">
@@ -57,11 +90,9 @@ const Navlogged = () => {
               />
               <div className="flex flex-col justify-center items-center">
                 <h1>
-                  {token.user.user_metadata?.full_name
-                    ? token.user.user_metadata.full_name.split(" ")[0]
-                    : token.user.user_metadata?.full_name}
+                  {firstName}
                 </h1>
-                <p className="text-xs text-[#403F3F]">Learner</p>
+                <p className="text-xs text-[#403F3F]">{role}</p>
               </div>
               <img src={ChevDown} alt="" className="w-3 h-3" />
             </a>

@@ -5,22 +5,49 @@ import { Link } from "react-router-dom";
 import supabase from "../config/supabaseClient";
 
 const LearnersCard = () => {
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [role, setRole] = useState<string>("Learner");
+  const [username, setUsername] = useState<string | null>(null);
+
   const [token, setToken] = useState<any>(null);
 
   useEffect(() => {
-    try {
-      const storedToken = sessionStorage.getItem("token");
-      if (storedToken) {
-        const parsedToken = JSON.parse(storedToken);
-        setToken(parsedToken);
-      } else {
-        console.warn("No token found in sessionStorage");
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user ?? null;
+        if (!mounted) return;
+        setAuthUser(user);
+
+        if (user?.id) {
+          const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("username, role")
+            .eq("id", user.id)
+            .single();
+
+          if (!error && profile) {
+            if (mounted) {
+              setRole(profile.role ?? "Learner");
+              setUsername(profile.username ?? null);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load user/profile", err);
       }
-    } catch (error) {
-      console.error("Error parsing token from sessionStorage:", error);
-      setToken(null);
-    }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+  const displayName =
+    authUser?.user_metadata?.full_name
+      ? authUser.user_metadata.full_name.split(" ")[0]
+      : authUser?.user_metadata?.name ?? username ?? "Learner";
+
   console.log("Token in LearnersCard:", token);
 
   return (
@@ -39,11 +66,10 @@ const LearnersCard = () => {
             />
             <div className="flex flex-col justify-center items-center mt-2">
               <h1 className="text-lg">
-                {token?.user?.user_metadata?.full_name.split(" ")[0] ||
-                  token?.user?.user_metadata?.name}
+                {displayName}
               </h1>
               <p className="text-xs text-[#403F3F] border-1 border-[rgba(0,0,0,0.25)] px-2 rounded-3xl">
-                Learner
+                {role}
               </p>
             </div>
           </Link>
