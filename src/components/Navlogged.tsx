@@ -3,39 +3,15 @@ import ChevDown from "../assets/img/chevronD.svg";
 import { Link } from "react-router-dom";
 import DropdownMenu from "./DropdownMenu";
 import { useState, useEffect, useRef } from "react";
-import supabase from "../config/supabaseClient";
 
 const Navlogged = () => {
   const token = JSON.parse(sessionStorage.getItem("token") || "null");
+  // move profile into state so UI can react to updates
+  const [profileState, setProfileState] = useState<any>(() =>
+    JSON.parse(sessionStorage.getItem("profile") || "null")
+  );
   const [showMenu, setShowMenu] = useState(false);
-  const [role, setRole] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const userId = token?.user?.id;
-        if (!userId) {
-          if (mounted) setRole(null);
-          return;
-        }
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .single();
-
-        if (!error && mounted) setRole(profile?.role ?? "Learner");
-        if (error && mounted) setRole("Learner");
-      } catch {
-        if (mounted) setRole("Learner");
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [token?.user?.id]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -52,15 +28,43 @@ const Navlogged = () => {
     }
   }, [showMenu]);
 
-  const firstName =
-    token?.user?.user_metadata?.full_name
-      ? token.user.user_metadata.full_name.split(" ")[0]
-      : token?.user?.user_metadata?.name ?? "User";
+  useEffect(() => {
+    // handler for custom same-tab updates
+    function onProfileUpdated(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail) setProfileState(detail);
+      else
+        setProfileState(
+          JSON.parse(sessionStorage.getItem("profile") || "null")
+        );
+    }
+    // handler for cross-tab updates (storage event)
+    function onStorage(e: StorageEvent) {
+      if (e.key === "profile") {
+        setProfileState(JSON.parse(e.newValue || "null"));
+      }
+    }
+    window.addEventListener(
+      "profile_updated",
+      onProfileUpdated as EventListener
+    );
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(
+        "profile_updated",
+        onProfileUpdated as EventListener
+      );
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  const username = profileState?.username ?? "User";
+  const role = profileState?.role ?? "Learner";
 
   return (
     <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] bg-white flex items-center pl-5 fixed z-50 ">
       <div className="flex w-2/4 ">
-        {token?.user ? (
+        {token ? (
           <Link to="/Home" className="flex">
             <h1 className="poppins-extrabold text-3xl text-[#ff0000]">SPAID</h1>
             <h1 className="poppins-extrabold text-3xl text-[#ff8c00]">LEARN</h1>
@@ -72,30 +76,29 @@ const Navlogged = () => {
           </div>
         )}
       </div>
-      {token?.user && (
+      {token && (
         <>
           <div className="w-2/4  h-full flex justify-end items-center">
             <Link to="/Courses" className="poppins-regular">
               Courses
             </Link>
-            <a
-              href="#"
+            <button
+              type="button"
               onClick={() => setShowMenu(!showMenu)}
               className=" h-11 max-w-50 rounded-xl bg-[#f5f5f5] gap-2 flex px-3 justify-between items-center mx-8"
             >
               <img
-                src={token.user.user_metadata.avatar_url || Avatar}
-                alt="profile"
+                // prefer avatar from stored profile, then auth metadata, then default
+                src={profileState?.avatar_url || Avatar}
+                alt={profileState?.username ?? "profile"}
                 className="w-8 h-8 bg-white rounded-full"
               />
               <div className="flex flex-col justify-center items-center">
-                <h1>
-                  {firstName}
-                </h1>
+                <h1>{username.split(" ")[0]}</h1>
                 <p className="text-xs text-[#403F3F]">{role}</p>
               </div>
               <img src={ChevDown} alt="" className="w-3 h-3" />
-            </a>
+            </button>
           </div>
         </>
       )}
