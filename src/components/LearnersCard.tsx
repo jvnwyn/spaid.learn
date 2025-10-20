@@ -120,7 +120,7 @@ const LearnersCard = () => {
                 Avatarcard
               }
               alt=""
-              className="w-20 bg-[#f5f5f5] rounded-full"
+              className="w-20 h-20 bg-[#f5f5f5] rounded-full object-cover"
             />
             <div className="flex flex-col justify-center items-center mt-2">
               <h1 className="text-lg">{displayName}</h1>

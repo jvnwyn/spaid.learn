@@ -91,7 +91,7 @@ const Navlogged = () => {
                 // prefer avatar from stored profile, then auth metadata, then default
                 src={profileState?.avatar_url || Avatar}
                 alt={profileState?.username ?? "profile"}
-                className="w-8 h-8 bg-white rounded-full"
+                className="w-8 h-8 bg-white rounded-full object-cover"
               />
               <div className="flex flex-col justify-center items-center">
                 <h1>{username.split(" ")[0]}</h1>

@@ -160,7 +160,7 @@ const AccountProf = () => {
       setError("Name cannot be empty");
       return;
     }
-
+    setLoading(true);
     setSaving(true);
     try {
       // if a new avatar was selected, upload it first and get the public URL
@@ -281,6 +281,7 @@ const AccountProf = () => {
       setError(err?.message ?? "Save failed");
     } finally {
       setSaving(false);
+      setLoading(false);
     }
   };
 
