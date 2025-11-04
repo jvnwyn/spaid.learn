@@ -8,10 +8,10 @@ import CourseDescription from "../components/CourseDescription";
 
 type Course = {
   id: number;
+  uploader_id?: string | null;
   course_name: string;
   course_description: string;
   course_url?: string | null;
-  // ...other columns...
 };
 
 const CoursePage = () => {
@@ -81,7 +81,7 @@ const CoursePage = () => {
           <CourseDescription course={course} />
         </div>
         <div className="flex flex-col gap-6 w-full md:w-[340px]">
-          <CourseSidebar />
+          <CourseSidebar course={course} />
         </div>
       </div>
     </div>

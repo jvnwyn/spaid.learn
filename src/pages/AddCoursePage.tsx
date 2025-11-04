@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
+import MyCourses from "@/components/MyCourses";
 
 const AddCoursePage = () => {
   const [courseName, setCourseName] = useState<string>("");
@@ -98,6 +99,10 @@ const AddCoursePage = () => {
         course_description: courseDescription.trim(),
       };
       if (publicUrl) payload.course_url = publicUrl;
+      // include uploader id if available
+      if (profileId !== null && profileId !== undefined) {
+        payload.uploader_id = profileId;
+      }
 
       const { error: insertErr } = await supabase
         .from("course_id")
