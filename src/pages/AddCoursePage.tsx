@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
+import { extractPdfText } from "../utils/pdfExtractor";
 import MyCourses from "@/components/MyCourses";
 
 const AddCoursePage = () => {
@@ -16,6 +17,7 @@ const AddCoursePage = () => {
   const [profileId, setProfileId] = useState<any>(null);
   const navigate = useNavigate();
   const profile = JSON.parse(sessionStorage.getItem("profile") || "null");
+
   useEffect(() => {
     if (profile) {
       setProfileId(profile.id);
@@ -70,13 +72,26 @@ const AddCoursePage = () => {
 
     setLoading(true);
     try {
-      // 1) Upload file to "courses" bucket (if provided), get public URL
       let publicUrl: string | null = null;
+      let extractedText: string = "";
+
       if (selectedFile) {
-        const rawExt = selectedFile.name.split(".").pop() || "bin";
-        const ext = rawExt.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin";
+        // Only allow PDF files
+        if (
+          selectedFile.type !== "application/pdf" &&
+          !selectedFile.name.toLowerCase().endsWith(".pdf")
+        ) {
+          setError("Only PDF files are accepted.");
+          setLoading(false);
+          return;
+        }
+
+        // Extract text from PDF
+        extractedText = await extractPdfText(selectedFile);
+
+        // Upload file to storage
         const safeName = selectedFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
-        const filePath = `${profileId}/${Date.now()}_${safeName}`; // prefix folder optional
+        const filePath = `${profileId}/${Date.now()}_${safeName}`;
 
         const { error: uploadErr } = await supabase.storage
           .from("courses")
@@ -93,13 +108,13 @@ const AddCoursePage = () => {
           throw new Error("Failed to obtain public URL for uploaded file.");
       }
 
-      // 2) Insert course record into "course_id" table (use actual column names)
+      // Insert course record into Supabase, including extracted text
       const payload: any = {
         course_name: courseName.trim(),
         course_description: courseDescription.trim(),
+        course_content: extractedText ?? "",
       };
       if (publicUrl) payload.course_url = publicUrl;
-      // include uploader id if available
       if (profileId !== null && profileId !== undefined) {
         payload.uploader_id = profileId;
       }
@@ -109,7 +124,6 @@ const AddCoursePage = () => {
         .insert([payload]);
       if (insertErr) throw insertErr;
 
-      // show a brief top-center popup, then navigate
       setMsg("Course added successfully.");
       setShowToast(true);
       setTimeout(() => {
@@ -143,7 +157,7 @@ const AddCoursePage = () => {
         Learn / Profile / Add Course
       </Link>
 
-      <div className=" w-full max-w-4xl border border-[rgba(0,0,0,0.25)] px-10 py-5 mt-15">
+      <div className="w-full max-w-4xl border border-[rgba(0,0,0,0.25)] px-10 py-5 mt-15">
         <h2 className="text-lg font-medium text-center mb-8">Add Course</h2>
 
         <form onSubmit={handleSubmit}>
@@ -166,13 +180,13 @@ const AddCoursePage = () => {
               placeholder="Enter Course Description"
               value={courseDescription}
               onChange={(e) => setCourseDescription(e.target.value)}
-              className="w-full border rounded-lg px-4 py-2 h-24  border-[rgba(0,0,0,0.25)] resize-none focus:outline-none text-sm"
+              className="w-full border rounded-lg px-4 py-2 h-24 border-[rgba(0,0,0,0.25)] resize-none focus:outline-none text-sm"
             />
           </div>
 
           <div className="mb-3">
             <label className="block mb-2 font-medium text-sm">
-              Course Files
+              Course Files (PDF only)
             </label>
 
             <label
@@ -197,18 +211,18 @@ const AddCoursePage = () => {
               </svg>
               <span>
                 {isDragging
-                  ? "Drop file to upload"
+                  ? "Drop PDF to upload"
                   : selectedFile
                   ? selectedFile.name
-                  : "Drag and drop files here"}
+                  : "Drag and drop PDF file here"}
               </span>
               <span className="text-xs text-gray-400 mt-1">
-                or click to browse
+                or click to browse (PDF only)
               </span>
               <input
                 id="course-file"
                 type="file"
-                accept="*/*"
+                accept="application/pdf,.pdf"
                 onChange={handleFileChange}
                 className="hidden"
               />
