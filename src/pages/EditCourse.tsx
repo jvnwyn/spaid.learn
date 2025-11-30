@@ -6,6 +6,9 @@ import supabase from "../config/supabaseClient";
 function EditCourse() {
   const { id: routeId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
+  // Parse id to number for consistent Supabase equality filter
+  const courseId =
+    routeId && !Number.isNaN(Number(routeId)) ? Number(routeId) : null;
 
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
@@ -19,7 +22,7 @@ function EditCourse() {
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!routeId) {
+    if (!courseId) {
       setError("Invalid or missing course id.");
       setInitialLoading(false);
       return;
@@ -31,7 +34,7 @@ function EditCourse() {
         const { data, error: fetchErr } = await supabase
           .from("course_id")
           .select("course_name, course_description, course_url")
-          .eq("id", routeId)
+          .eq("id", courseId)
           .single();
         if (fetchErr) throw fetchErr;
         if (active && data) {
@@ -50,7 +53,7 @@ function EditCourse() {
     return () => {
       active = false;
     };
-  }, [routeId]);
+  }, [courseId]);
 
   useEffect(() => {
     if (showToast) {
@@ -98,7 +101,7 @@ function EditCourse() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading || initialLoading) return;
-    if (!routeId) {
+    if (!courseId) {
       setError("Cannot update without course id.");
       return;
     }
@@ -132,7 +135,7 @@ function EditCourse() {
           course_description: courseDescription,
           course_url: updatedFilePath,
         })
-        .eq("id", routeId);
+        .eq("id", courseId);
 
       if (updateErr) throw updateErr;
 

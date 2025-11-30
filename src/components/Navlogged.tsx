@@ -98,7 +98,7 @@ const Navlogged = () => {
   const role = profileState?.role ?? "Learner";
 
   // New: derive a robust logged-in flag from session user
-  const isLoggedIn = token?.user?.id;
+  const isLoggedIn = username ? true : false;
 
   return (
     <nav className=" w-full h-15 border-b-1 border-[rgba(0,0,0,0.25)] bg-white flex items-center pl-5 fixed z-50 ">

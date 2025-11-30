@@ -15,10 +15,10 @@ type Course = {
 
 const ViewCoursePage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!id) {
@@ -26,6 +26,9 @@ const ViewCoursePage: React.FC = () => {
       setLoading(false);
       return;
     }
+
+    const idNum = Number(id);
+    const eqId = Number.isNaN(idNum) ? id : idNum;
 
     let cancelled = false;
     const fetchCourse = async () => {
@@ -35,7 +38,7 @@ const ViewCoursePage: React.FC = () => {
         const { data, error } = await supabase
           .from("course_id")
           .select("*")
-          .eq("id", id)
+          .eq("id", eqId)
           .single();
 
         if (error) throw error;
@@ -54,9 +57,8 @@ const ViewCoursePage: React.FC = () => {
   }, [id]);
 
   const handleBack = () => {
-    // go back in history if possible, otherwise fall back to /course
     if (window.history.length > 1) navigate(-1);
-    else navigate("/course");
+    else navigate("/Home");
   };
 
   if (loading) return <div className="p-4 pt-50">Loading course...</div>;
