@@ -17,6 +17,7 @@ import AddCoursePage from "./pages/AddCoursePage";
 import CoursePage from "./pages/CoursePage";
 import ViewCoursePage from "./pages/ViewCoursePage";
 import EditCourse from "./pages/EditCourse";
+import CourseNav from "./pages/CourseNav";
 
 function App() {
   const router = createBrowserRouter(
@@ -32,6 +33,7 @@ function App() {
         <Route path="/course/:id" element={<CoursePage />} />
         <Route path="/view-course/:id" element={<ViewCoursePage />} />
         <Route path="/edit-course/:id" element={<EditCourse />} />
+        <Route path="/Courses" element={<CourseNav />} />
       </Route>
     )
   );

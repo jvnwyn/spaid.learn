@@ -71,12 +71,12 @@ const ViewCoursePage: React.FC = () => {
       <button
         type="button"
         onClick={handleBack}
-        className="absolute top-20 cursor-pointer left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+        className="absolute top-22 cursor-pointer left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
       >
         <FaChevronLeft />
         <span>Learn / Courses / {course?.course_name}</span>
       </button>
-      <div className="flex-1 flex flex-col md:flex-row gap-8 mt-20 items-stretch">
+      <div className="flex-1 flex flex-col md:flex-row gap-4 mt-20 items-stretch">
         <CourseOverviewCard course={course} />
         <CourseContentCard course={course} />
       </div>
