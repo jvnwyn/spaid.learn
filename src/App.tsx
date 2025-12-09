@@ -18,6 +18,7 @@ import CoursePage from "./pages/CoursePage";
 import ViewCoursePage from "./pages/ViewCoursePage";
 import EditCourse from "./pages/EditCourse";
 import CourseNav from "./pages/CourseNav";
+import StartQuiz from "./pages/StartQuiz";
 
 function App() {
   const router = createBrowserRouter(
@@ -34,6 +35,7 @@ function App() {
         <Route path="/view-course/:id" element={<ViewCoursePage />} />
         <Route path="/edit-course/:id" element={<EditCourse />} />
         <Route path="/Courses" element={<CourseNav />} />
+        <Route path="/start-quiz" element={<StartQuiz />} />
       </Route>
     )
   );
