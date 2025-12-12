@@ -2,7 +2,7 @@ import React from "react";
 
 const CourseContentQuestion: React.FC = () => {
   return (
-    <div className="w-full h-[49%] border border-[rgba(0,0,0,0.25)] p-4 flex flex-col">
+    <div className="w-full h-[50%] border border-[rgba(0,0,0,0.25)] p-4 flex flex-col">
       <div className="text-sm text-black font-semibold mb-2">QUESTION</div>
       <p className="text-[13px] text-black leading-6 mb-4">
         {/* ...existing content... */}

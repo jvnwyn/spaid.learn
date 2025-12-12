@@ -1,10 +1,11 @@
+import qrApp from "../../public/qrcode.png";
 
 const QrCom = () => {
   return (
     <div className="w-full flex flex-col px-4 md:px-20 pt-5 gap-5 ">
       <div className="w-full max-w-[880px] h-auto md:h-[170px] bg-[#f5f5f5] border-1 border-[rgba(0,0,0,0.25)] p-4 flex flex-col md:flex-row items-center mx-auto">
-        <div className="w-32 h-32 border-1 border-[rgba(0,0,0,0.25)] flex justify-center items-center mx-auto md:mx-0">
-          QR CODE
+        <div className="w-32 h-32 border-1 border-[rgba(0,0,0,0.25)] overflow-hidden flex justify-center items-center mx-auto md:mx-0">
+          <img src={qrApp} alt="QR Code" className="w-full h-full object-fit" />
         </div>
         <div className="h-full px-0 md:px-5 py-3 w-full md:w-100 flex flex-col items-center md:items-start">
           <h1 className="text-lg text-center md:text-left">

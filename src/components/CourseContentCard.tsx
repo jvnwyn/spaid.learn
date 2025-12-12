@@ -1,6 +1,8 @@
 import React from "react";
 import CourseContentOverview from "./CourseContentOverview";
 import CourseQuestion from "./CourseContentQuestion";
+import { FaChevronLeft } from "react-icons/fa";
+import { FaChevronRight } from "react-icons/fa";
 
 interface Course {
   id?: string;
@@ -18,13 +20,13 @@ interface Props {
   onPrevPage?: () => void;
 }
 
-const CourseContentCard: React.FC<Props> = ({ 
+const CourseContentCard: React.FC<Props> = ({
   course,
   content = "No content available",
   currentPage = 1,
   totalPages = 1,
   onNextPage,
-  onPrevPage
+  onPrevPage,
 }) => {
   if (!course) {
     return (
@@ -37,39 +39,41 @@ const CourseContentCard: React.FC<Props> = ({
   }
 
   return (
-    <div className="w-full flex flex-row items-start gap-4">
+    <div className="w-full h-[80vh] flex flex-row items-start gap-4 ">
       {/* Left column - Course Overview */}
-      <CourseContentOverview 
+      <CourseContentOverview
         courseName={course.course_name}
         courseDescription={course.course_description}
       />
-      
+
       {/* Right column - Content and Question */}
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 flex flex-col gap-4 h-full">
         {/* Content panel */}
-        <div className="border border-[rgba(0,0,0,0.25)] rounded-lg p-4">
+        <div className="border border-[rgba(0,0,0,0.25)] h-[50%] rounded-lg p-4">
           <div className="flex items-center justify-center gap-2 mb-3">
             <button
               onClick={onPrevPage}
               disabled={currentPage === 1}
-              className="text-sm hover:bg-gray-100 px-1 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+              className="text-md hover:bg-gray-100 px-1 rounded disabled:opacity-30 disabled:cursor-not-allowed"
               type="button"
             >
-              ‹
+              <FaChevronLeft />
             </button>
-            <h2 className="text-sm font-semibold uppercase">{course.course_name}</h2>
+            <h2 className="text-sm font-semibold uppercase">
+              {course.course_name}
+            </h2>
             <button
               onClick={onNextPage}
               disabled={currentPage === totalPages}
-              className="text-sm hover:bg-gray-100 px-1 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+              className="text-md hover:bg-gray-100 px-1 rounded disabled:opacity-30 disabled:cursor-not-allowed"
               type="button"
             >
-              ›
+              <FaChevronRight />
             </button>
           </div>
           <p className="text-xs text-black leading-relaxed">{content}</p>
         </div>
-        
+
         {/* Question panel */}
         <CourseQuestion />
       </div>
