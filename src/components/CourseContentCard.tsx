@@ -1,6 +1,7 @@
 import React from "react";
 import CourseContentOverview from "./CourseContentOverview";
 import CourseContentQuestion from "./CourseContentQuestion";
+// ...existing code...
 
 interface Course {
   id?: string;
@@ -71,7 +72,11 @@ const CourseContentCard: React.FC<Props> = ({
         </div>
         
         {/* Question panel - dynamically generated based on content */}
-        <CourseContentQuestion content={content} pageNumber={currentPage} />
+        <CourseContentQuestion 
+          content={content} 
+          pageNumber={currentPage} 
+          onCorrect={onNextPage} 
+        />
       </div>
     </div>
   );

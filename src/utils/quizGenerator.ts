@@ -1,101 +1,140 @@
 export interface QuizQuestion {
+  id: number | string;
   question: string;
   options: string[];
   correctAnswer: number;
 }
 
+/** Phrases to always remove from quiz generation */
+const BANNED_PHRASES = [
+  /Alternative Learning System K to 12 Basic Education Curriculum/gi,
+  /ALS K to 12 BEC/gi
+];
+
+function sanitizeContent(input: string): string {
+  if (!input) return "";
+  let out = input;
+  for (const re of BANNED_PHRASES) out = out.replace(re, "");
+  return out.replace(/\s{2,}/g, " ").trim();
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getDefaultQuestion(id: number | string): QuizQuestion {
+  return {
+    id,
+    question: "What is the main topic discussed in this section?",
+    options: ["Education", "History", "Geography", "Science"],
+    correctAnswer: 0
+  };
+}
+
+function generateWrongAnswers(correctWord: string, candidates: string[], max = 3): string[] {
+  const out: string[] = [];
+  const cleaned = candidates
+    .map(w => w.replace(/[^a-zA-Z]/g, ""))
+    .filter(w => w.length > 2 && w.toLowerCase() !== correctWord.toLowerCase());
+
+  for (const w of cleaned) {
+    if (out.length >= max) break;
+    if (!out.includes(w)) out.push(w);
+  }
+
+  const fillers = ["information", "knowledge", "learning", "development", "understanding", "education"];
+  let i = 0;
+  while (out.length < max) {
+    const f = fillers[i++] || `option${i}`;
+    if (f.toLowerCase() !== correctWord.toLowerCase() && !out.includes(f)) out.push(f);
+  }
+
+  return out.slice(0, max);
+}
+
 export function generateQuizFromContent(content: string): QuizQuestion {
-  // Extract sentences from content
-  const sentences = content
+  const safe = sanitizeContent(content);
+  const sentences = safe
     .split(/[.!?]/)
     .map(s => s.trim())
     .filter(s => s.length > 20 && s.length < 200);
 
-  if (sentences.length === 0) {
-    return getDefaultQuestion();
-  }
+  if (sentences.length === 0) return getDefaultQuestion(Math.random().toString(36));
 
-  // Pick a random sentence to base the question on
-  const randomIndex = Math.floor(Math.random() * Math.min(sentences.length, 5));
-  const selectedSentence = sentences[randomIndex];
+  const selectedSentence = sentences[Math.floor(Math.random() * Math.min(sentences.length, 5))];
 
-  // Extract key terms (words with more than 5 characters, likely important)
-  const words = selectedSentence.split(/\s+/).filter(w => w.length > 5);
-  
-  if (words.length === 0) {
-    return getDefaultQuestion();
-  }
+  const words = selectedSentence
+    .split(/\s+/)
+    .map(w => w.replace(/[^a-zA-Z]/g, ""))
+    .filter(w => w.length > 3 && !/^\d+$/.test(w));
 
-  // Pick a word to blank out for fill-in-the-blank style
-  const keyWordIndex = Math.floor(Math.random() * words.length);
-  const keyWord = words[keyWordIndex].replace(/[^a-zA-Z]/g, '');
+  if (words.length === 0) return getDefaultQuestion(Math.random().toString(36));
 
-  // Create question by blanking out the key word
-  const questionText = `According to the text, complete the following: "${selectedSentence.replace(
-    new RegExp(`\\b${keyWord}\\b`, 'i'),
-    '_____'
+  const keyWord = words[Math.floor(Math.random() * words.length)];
+  const questionText = `Complete the following: "${selectedSentence.replace(
+    new RegExp(`\\b${keyWord}\\b`, "i"),
+    "_____"
   )}"`;
 
-  // Generate wrong answers (variations or random words from text)
-  const otherWords = words
-    .filter((_, i) => i !== keyWordIndex)
-    .map(w => w.replace(/[^a-zA-Z]/g, ''))
-    .filter(w => w.length > 3);
-
-  const wrongAnswers = generateWrongAnswers(keyWord, otherWords);
-
-  // Shuffle options
+  const otherWords = words.filter(w => w.toLowerCase() !== keyWord.toLowerCase());
+  const wrongAnswers = generateWrongAnswers(keyWord, otherWords, 3);
   const options = shuffleArray([keyWord, ...wrongAnswers]);
   const correctAnswer = options.indexOf(keyWord);
 
   return {
+    id: Math.random().toString(36),
     question: questionText,
     options,
     correctAnswer
   };
 }
 
-function generateWrongAnswers(correctWord: string, availableWords: string[]): string[] {
-  const wrongAnswers: string[] = [];
-  
-  // Use other words from text if available
-  for (const word of availableWords) {
-    if (wrongAnswers.length >= 3) break;
-    if (word.toLowerCase() !== correctWord.toLowerCase() && !wrongAnswers.includes(word)) {
-      wrongAnswers.push(word);
+export function generateMultipleQuizQuestions(
+  pages: { content: string }[],
+  count: number = 5
+): QuizQuestion[] {
+  if (!pages || pages.length === 0) {
+    // return default set of count questions
+    const defaults: QuizQuestion[] = [];
+    for (let i = 0; i < count; i++) defaults.push(getDefaultQuestion(i));
+    return defaults;
+  }
+
+  const pool: QuizQuestion[] = pages.map((p, i) => {
+    const q = generateQuizFromContent(p.content || "");
+    q.id = typeof q.id === "number" ? q.id : i;
+    return q;
+  });
+
+  // pick unique questions (by question text) and fill to `count`
+  const picked: QuizQuestion[] = [];
+  const seen = new Set<string>();
+  const shuffledPool = shuffleArray(pool);
+
+  for (const q of shuffledPool) {
+    if (picked.length >= count) break;
+    if (!seen.has(q.question)) {
+      picked.push(q);
+      seen.add(q.question);
     }
   }
 
-  // Fill remaining slots with generic options
-  const fillers = ['information', 'development', 'understanding', 'knowledge', 'learning', 'education'];
-  while (wrongAnswers.length < 3) {
-    const filler = fillers[wrongAnswers.length];
-    if (filler.toLowerCase() !== correctWord.toLowerCase()) {
-      wrongAnswers.push(filler);
+  while (picked.length < count) {
+    const page = pages[Math.floor(Math.random() * pages.length)];
+    const extra = generateQuizFromContent(page.content || "");
+    if (!seen.has(extra.question)) {
+      picked.push(extra);
+      seen.add(extra.question);
+    } else {
+      // allow duplicates if no new unique available after attempts
+      picked.push(extra);
     }
   }
 
-  return wrongAnswers.slice(0, 3);
-}
-
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function getDefaultQuestion(): QuizQuestion {
-  return {
-    question: "What is the main topic discussed in this section?",
-    options: [
-      "Alternative Learning System",
-      "Traditional Education",
-      "Online Gaming",
-      "Sports Training"
-    ],
-    correctAnswer: 0
-  };
+  return shuffleArray(picked).slice(0, count);
 }

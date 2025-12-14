@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import CourseContentCard from "../components/CourseContentCard";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
 import { parseAndPaginateContent, ParsedPage } from "../utils/contentParser";
+import { saveProgress, getProgress } from "../utils/progressTracker";
 
 type Course = {
   id: string;
@@ -15,13 +16,26 @@ type Course = {
 
 const ViewCoursePage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [userId, setUserId] = useState<string | null>(null);
+  
   // Pagination state
   const [pages, setPages] = useState<ParsedPage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     if (!id) {
@@ -44,15 +58,22 @@ const ViewCoursePage: React.FC = () => {
         if (error) throw error;
         if (!cancelled) {
           setCourse(data as Course);
-
-          // Parse and paginate the course content
+          
           if (data.course_content) {
-            const paginatedPages = parseAndPaginateContent(
-              data.course_content,
-              2000
-            );
+            const paginatedPages = parseAndPaginateContent(data.course_content, 2000);
             setPages(paginatedPages);
-            setCurrentPage(1);
+            
+            // Load saved progress
+            if (userId) {
+              const progress = await getProgress(userId, id);
+              if (progress && progress.currentPage > 0) {
+                setCurrentPage(progress.currentPage);
+              } else {
+                setCurrentPage(1);
+              }
+            } else {
+              setCurrentPage(1);
+            }
           }
         }
       } catch (e: any) {
@@ -66,31 +87,45 @@ const ViewCoursePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, userId]);
+
+  // Save progress when page changes
+  useEffect(() => {
+    if (userId && id && pages.length > 0) {
+      saveProgress(userId, id, currentPage, pages.length);
+    }
+  }, [currentPage, userId, id, pages.length]);
 
   const handleNextPage = () => {
     if (currentPage < pages.length) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // Course completed - redirect to quiz
+      navigate(`/start-quiz/${id}`, { 
+        state: { 
+          pages: pages,
+          courseName: course?.course_name 
+        } 
+      });
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   if (loading) return <div className="p-4 pt-20">Loading course...</div>;
-  if (error)
-    return <div className="p-4 pt-20 text-red-600">Error: {error}</div>;
+  if (error) return <div className="p-4 pt-20 text-red-600">Error: {error}</div>;
   if (!course) return <div className="p-4 pt-20">Course not found.</div>;
 
-  const currentPageContent = pages.find((p) => p.pageNumber === currentPage);
+  const currentPageContent = pages.find(p => p.pageNumber === currentPage);
 
   return (
-    <div className="bg-white min-h-screen pt-20 px-8 pb-8">
+    <div className="bg-white min-h-screen pt-16 px-8 pb-8">
       {/* Breadcrumb */}
       <Link
         to="/Courses"
@@ -99,15 +134,11 @@ const ViewCoursePage: React.FC = () => {
         <FaChevronLeft size={10} />
         Learn / Courses / {course?.course_name}
       </Link>
-
+      
       {/* Content */}
-      <CourseContentCard
+      <CourseContentCard 
         course={course}
-        content={
-          currentPageContent?.content ||
-          course.course_content ||
-          "No content available"
-        }
+        content={currentPageContent?.content || course.course_content || "No content available"}
         currentPage={currentPage}
         totalPages={pages.length || 1}
         onNextPage={handleNextPage}
