@@ -164,7 +164,7 @@ const StartQuiz: React.FC = () => {
   // Quiz Result Screen
   if (showResult) {
     return (
-      <div className="w-full flex flex-col items-center min-h-screen px-4 py-6 pt-35">
+      <div className="w-full flex flex-col items-center bg-[#f8f8f8] min-h-screen px-4 py-6 pt-35">
         <button
           type="button"
           onClick={handleBack}
@@ -216,39 +216,47 @@ const StartQuiz: React.FC = () => {
   if (quizStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
     return (
-      <div className="w-full flex flex-col items-center min-h-screen px-4 py-6 pt-35">
+      <div className="w-full flex flex-col items-center min-h-screen bg-[#f8f8f8] px-4 py-6 pt-35">
         <button
           type="button"
           onClick={handleBack}
-          className="absolute top-22 cursor-pointer left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+          className="absolute top-22 cursor-pointer text-sm left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
         >
           <FaChevronLeft />
           <span>Learn / Courses / {courseName}</span>
         </button>
 
-        <div className="w-[70%] bg-[#F5F5F5] border-[rgba(0,0,0,0.1)] rounded-md">
-          <div className="px-8 py-10">
-            <div className="text-sm text-black/70 mb-2">
-              Question {currentQuestionIndex + 1} of {questions.length}
+        <div className="w-[70%] bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Question Header */}
+          <div className="bg-[#f5f5f5] px-6 py-4 border-b border-gray-200">
+            <div className="text-xs text-black/50 mb-1">
+              Question {currentQuestionIndex + 1}
             </div>
-            <div className="text-lg font-semibold text-black mb-6">
+            <div className="text-lg font-medium text-black">
               {currentQuestion.question}
+            </div>
+          </div>
+
+          {/* Answer Options */}
+          <div className="px-6 py-6">
+            <div className="text-sm text-black/70 mb-4">
+              Select the correct answer
             </div>
 
             <div className="space-y-3">
               {currentQuestion.options.map((option, index) => (
                 <label
                   key={index}
-                  className={`flex items-center gap-3 p-3 rounded cursor-pointer border ${
+                  className={`flex items-center gap-3 py-3 px-4 cursor-pointer rounded-md border-l-4 transition-all ${
                     answered
                       ? index === currentQuestion.correctAnswer
-                        ? "bg-green-100 border-green-500"
+                        ? "border-l-green-500 bg-green-50"
                         : index === selectedAnswer
-                        ? "bg-red-100 border-red-500"
-                        : "bg-white border-[rgba(0,0,0,0.1)]"
+                        ? "border-l-red-500 bg-red-50"
+                        : "border-l-[#ff9800] bg-white"
                       : selectedAnswer === index
-                      ? "bg-gray-100 border-[rgba(0,0,0,0.25)]"
-                      : "bg-white border-[rgba(0,0,0,0.1)]"
+                      ? "border-l-[#ff9800] bg-orange-50"
+                      : "border-l-[#ff9800] bg-white hover:bg-gray-50"
                   }`}
                 >
                   <input
@@ -258,9 +266,9 @@ const StartQuiz: React.FC = () => {
                     checked={selectedAnswer === index}
                     onChange={() => !answered && setSelectedAnswer(index)}
                     disabled={answered}
-                    className="cursor-pointer"
+                    className="w-4 h-4 cursor-pointer accent-[#ff9800]"
                   />
-                  <span className="text-sm">{option}</span>
+                  <span className="text-sm text-black">{option}</span>
                 </label>
               ))}
             </div>
@@ -278,30 +286,31 @@ const StartQuiz: React.FC = () => {
                   : "✗ Incorrect. The correct answer is highlighted."}
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="max-w-5xl mx-auto flex justify-center gap-4 mt-6">
-          {!answered ? (
-            <button
-              type="button"
-              className="border border-[rgba(0,0,0,0.25)] rounded px-5 py-2 text-sm text-black cursor-pointer disabled:opacity-50"
-              onClick={handleSubmitAnswer}
-              disabled={selectedAnswer === null}
-            >
-              Submit Answer
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="border border-[rgba(0,0,0,0.25)] rounded px-5 py-2 text-sm text-black cursor-pointer"
-              onClick={handleNextQuestion}
-            >
-              {currentQuestionIndex < questions.length - 1
-                ? "Next Question"
-                : "See Results"}
-            </button>
-          )}
+            {/* Button */}
+            <div className="flex justify-end mt-6">
+              {!answered ? (
+                <button
+                  type="button"
+                  className="bg-[#ff9800] hover:bg-[#f57c00] text-white rounded-md px-6 py-2.5 text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={handleSubmitAnswer}
+                  disabled={selectedAnswer === null}
+                >
+                  Check Answer
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="bg-[#ff9800] hover:bg-[#f57c00] text-white rounded-md px-6 py-2.5 text-sm font-medium cursor-pointer transition-colors"
+                  onClick={handleNextQuestion}
+                >
+                  {currentQuestionIndex < questions.length - 1
+                    ? "Next Question"
+                    : "See Results"}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -322,13 +331,13 @@ const StartQuiz: React.FC = () => {
       <div className="w-[70%] bg-[#F5F5F5] border-[rgba(0,0,0,0.1)] rounded-md">
         <div className="px-8 py-10 text-center">
           <div className="text-sm text-black/70 mb-1">Let's Review!</div>
-          <div className="text-3xl md:text-4xl font-semibold text-black mb-10">
+          <div className="text-3xl md:text-4xl poppins-semibold text-black mb-10">
             Ready, Sets, Go!
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 items-start">
             <div className="flex flex-col items-center text-center">
-              <TbTargetArrow className="w-30 h-30 text-black mb-3" />
+              <TbTargetArrow className="w-30 h-30 text-[#ff0300] mb-3" />
               <div className="text-lg text-black">
                 Answer 5 questions
                 <br />
@@ -342,7 +351,7 @@ const StartQuiz: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <IoMdRepeat className="w-30 h-30 text-black mb-3" />
+              <IoMdRepeat className="w-30 h-30 text-[#ff0300] mb-3" />
               <div className="text-lg text-black">
                 Repeat as many
                 <br />
@@ -356,7 +365,7 @@ const StartQuiz: React.FC = () => {
       <div className="max-w-5xl mx-auto flex justify-center mt-6">
         <button
           type="button"
-          className="border border-[rgba(0,0,0,0.25)] rounded px-5 py-2 text-sm text-black cursor-pointer"
+          className="bg-[#ff9801] rounded px-5 py-2 text-sm text-black cursor-pointer"
           onClick={handleStartQuiz}
           disabled={!pages || pages.length === 0}
         >

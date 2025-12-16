@@ -101,8 +101,10 @@ const CourseContentQuestion: React.FC<Props> = ({
   }
 
   return (
-    <div className="border border-[rgba(0,0,0,0.25)] rounded-lg p-4">
-      <h3 className="font-semibold text-sm mb-2">QUESTION</h3>
+    <div className="border border-[rgba(0,0,0,0.25)] flex-1 rounded-lg p-4">
+      <h3 className="font-semibold text-sm mb-2 bg-[#ff0300] text-white px-3 w-fit rounded-full">
+        QUESTION
+      </h3>
       <p className="text-xs text-black mb-4 leading-relaxed">{quiz.question}</p>
 
       <div className="mb-4">
@@ -166,7 +168,7 @@ const CourseContentQuestion: React.FC<Props> = ({
         <button
           onClick={handleSubmit}
           disabled={selectedAnswer === null || submitted}
-          className="px-4 py-2 text-xs border border-[rgba(0,0,0,0.25)] rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-xs border bg-[#ff9801] hover:bg-[#e68a00] cursor-pointer border-[rgba(0,0,0,0.25)] rounded disabled:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Submit Answer
         </button>
