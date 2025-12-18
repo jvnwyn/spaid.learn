@@ -220,9 +220,9 @@ const StartQuiz: React.FC = () => {
         <button
           type="button"
           onClick={handleBack}
-          className="absolute top-22 cursor-pointer text-sm left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+          className="absolute top-22 cursor-pointer text-sm left-15 hover:underline text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
         >
-          <FaChevronLeft />
+          <FaChevronLeft size={13} />
           <span>Learn / Courses / {courseName}</span>
         </button>
 

@@ -143,7 +143,7 @@ const Navlogged = () => {
           <button
             type="button"
             onClick={() => setShowMenu(!showMenu)}
-            className=" h-11 max-w-50 rounded-xl bg-[#f5f5f5] cursor-pointer gap-2 flex px-3 justify-between items-center mx-8"
+            className=" h-11 min-w-[160px] rounded-xl bg-[#f5f5f5] cursor-pointer gap-2 flex px-3 justify-between items-center mx-8"
           >
             <img
               src={

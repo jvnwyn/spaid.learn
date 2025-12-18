@@ -101,19 +101,19 @@ const CourseContentQuestion: React.FC<Props> = ({
   }
 
   return (
-    <div className="border border-[rgba(0,0,0,0.25)] flex-1 rounded-lg p-4">
+    <div className="border border-[rgba(0,0,0,0.25)] h-[45%] rounded-lg p-4">
       <h3 className="font-semibold text-sm mb-2 bg-[#ff0300] text-white px-3 w-fit rounded-full">
         QUESTION
       </h3>
       <p className="text-xs text-black mb-4 leading-relaxed">{quiz.question}</p>
 
-      <div className="mb-4">
-        <p className="font-medium text-xs mb-2">Possible Answers</p>
+      <div className="mb-2">
+        <p className="font-medium text-xs mb-1">Possible Answers</p>
         <div className="space-y-2">
           {quiz.options.map((option, index) => (
             <label
               key={index}
-              className={`flex items-center gap-2 text-xs cursor-pointer p-2 rounded ${
+              className={`flex items-center gap-2 text-xs cursor-pointer py-1 rounded ${
                 submitted
                   ? index === quiz.correctAnswer
                     ? "bg-green-100 text-green-800"

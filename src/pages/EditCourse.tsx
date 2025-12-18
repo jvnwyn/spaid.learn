@@ -4,12 +4,16 @@ import { FaChevronLeft } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
 
 function EditCourse() {
-  const { id: routeId } = useParams<{ id?: string }>();
+  const params = useParams();
   const navigate = useNavigate();
-  // Parse id to number for consistent Supabase equality filter
-  const courseId =
-    routeId && !Number.isNaN(Number(routeId)) ? Number(routeId) : null;
 
+  // Try multiple possible param names
+  const routeId = params.id || params.courseId || params.course_id;
+
+  // Parse id to number for consistent Supabase equality filter
+  const courseId = routeId;
+
+  console.log("Editing course id:", courseId);
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -183,9 +187,9 @@ function EditCourse() {
       <button
         type="button"
         onClick={goBackOrFallback}
-        className="absolute top-20 left-15 cursor-pointer text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+        className="absolute top-20 hover:underline left-15 cursor-pointer text-sm text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
       >
-        <FaChevronLeft />
+        <FaChevronLeft size={13} />
         Learn / {courseName} / Edit Course
       </button>
 
@@ -221,7 +225,15 @@ function EditCourse() {
               Course Files{" "}
               {existingFilePath && (
                 <span className="text-xs text-gray-500 ml-2">
-                  (Current: {existingFilePath})
+                  (Current:{" "}
+                  {existingFilePath.includes("/")
+                    ? existingFilePath.split("/").pop()
+                    : existingFilePath.includes("_")
+                    ? existingFilePath.substring(
+                        existingFilePath.indexOf("_") + 1
+                      )
+                    : existingFilePath}
+                  )
                 </span>
               )}
             </label>

@@ -26,9 +26,9 @@ const ForgetPass = () => {
     <div className="min-h-screen flex items-center justify-center bg-white relative">
       <Link
         to="/"
-        className="absolute top-20 left-20 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+        className="absolute top-20 text-sm hover:underline left-20 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
       >
-        <FaChevronLeft />
+        <FaChevronLeft size={13} />
         back
       </Link>
       <form

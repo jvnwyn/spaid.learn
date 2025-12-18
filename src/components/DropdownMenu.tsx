@@ -1,33 +1,37 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
-import { useNavigate } from "react-router-dom";
 
 const DropdownMenu = () => {
   const navigate = useNavigate();
+
   async function signOut() {
     const { error } = await supabase.auth.signOut();
     sessionStorage.removeItem("token");
     navigate("/");
-    window.location.reload(); // Ensure all user state is cleared after sign out
+    window.location.reload();
   }
+
   return (
-    <div className="absolute bg-white right-2 md:right-8 rounded-md border border-[rgba(0,0,0,0.25)] top-18  max-w-xs  shadow-lg z-50">
-      <ul className="p-2 md:p-3 flex flex-col gap-3 md:gap-5 items-center">
+    <div className="absolute bg-white right-2 md:right-8 rounded-lg border border-[rgba(0,0,0,0.15)] top-18 min-w-[160px] shadow-md z-50 overflow-hidden">
+      <ul className="flex flex-col">
         <li>
           <Link
             to="/AccountSetting"
-            className="px-4 md:px-8 py-2 md:py-3 w-full  text-center rounded-md text-base md:text-lg"
+            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            PROFILE
+            <FaUser size={14} className="text-gray-400" />
+            Profile
           </Link>
         </li>
-        <li>
+        <li className="border-t border-[rgba(0,0,0,0.1)]">
           <button
-            className="cursor-pointer px-4 md:px-8 py-2 md:py-3 text-center rounded-md text-base md:text-lg"
+            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full cursor-pointer"
             onClick={signOut}
           >
-            LOG OUT
+            <FaSignOutAlt size={14} className="text-gray-400" />
+            Log Out
           </button>
         </li>
       </ul>

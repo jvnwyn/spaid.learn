@@ -94,9 +94,9 @@ const ViewCoursePage: React.FC = () => {
       {/* Breadcrumb */}
       <Link
         to="/Courses"
-        className="text-[rgba(0,0,0,0.25)] flex items-center gap-1 text-xs mb-4"
+        className="text-[rgba(0,0,0,0.25)] flex items-center gap-1 text-sm mb-4 hover:underline"
       >
-        <FaChevronLeft size={10} />
+        <FaChevronLeft size={13} />
         Learn / Courses / {course?.course_name}
       </Link>
 

@@ -13,9 +13,9 @@ const CoursePage = () => {
     <div className="bg-[#f8f8f8]  min-h-screen px-10 md:px-25 pt-30 py-6">
       <Link
         to="/Home"
-        className="absolute top-20 left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+        className="absolute top-20 hover:underline left-15 text-sm text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
       >
-        <FaChevronLeft />
+        <FaChevronLeft size={13} />
         Back
       </Link>
       <CourseHeader courseId={id} />

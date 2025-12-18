@@ -151,9 +151,9 @@ const AddCoursePage = () => {
 
       <Link
         to="/AccountSetting"
-        className="absolute top-20 left-15 text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
+        className="absolute top-20 hover:underline left-15 text-sm text-[rgba(0,0,0,0.25)] flex justify-center items-center gap-2"
       >
-        <FaChevronLeft />
+        <FaChevronLeft size={13} />
         Learn / Profile / Add Course
       </Link>
 
