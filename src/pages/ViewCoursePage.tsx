@@ -27,7 +27,11 @@ const ViewCoursePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Initialize progress when user starts viewing course
-  const initializeProgress = async (userId: string, courseId: string, totalPages: number) => {
+  const initializeProgress = async (
+    userId: string,
+    courseId: string,
+    totalPages: number
+  ) => {
     try {
       // Check if progress already exists
       const { data: existingProgress } = await supabase
@@ -60,26 +64,24 @@ const ViewCoursePage: React.FC = () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      
+
       if (!user || !id) return;
 
       const percentage = Math.round((pageNum / totalPages) * 100);
       const isCompleted = pageNum >= totalPages;
 
-      await supabase
-        .from("user_course_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            course_id: id,
-            current_page: pageNum,
-            total_pages: totalPages,
-            percentage: percentage,
-            completed: isCompleted,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,course_id" }
-        );
+      await supabase.from("user_course_progress").upsert(
+        {
+          user_id: user.id,
+          course_id: id,
+          current_page: pageNum,
+          total_pages: totalPages,
+          percentage: percentage,
+          completed: isCompleted,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,course_id" }
+      );
     } catch (e) {
       console.error("Error updating progress:", e);
     }
@@ -120,7 +122,7 @@ const ViewCoursePage: React.FC = () => {
             const {
               data: { user },
             } = await supabase.auth.getUser();
-            
+
             if (user) {
               await initializeProgress(user.id, id, paginatedPages.length);
             }
@@ -213,7 +215,7 @@ const ViewCoursePage: React.FC = () => {
   const currentPageContent = pages.find((p) => p.pageNumber === currentPage);
 
   return (
-    <div className="bg-white min-h-screen pt-20 px-8 pb-8">
+    <div className="bg-white min-h-screen pt-20 px-4 sm:px-6 lg:px-8 pb-8">
       {/* Breadcrumb */}
       <Link
         to="/Courses"
