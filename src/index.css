@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.course-content {
+  line-height: 1.7;
+}

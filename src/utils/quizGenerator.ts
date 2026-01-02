@@ -8,13 +8,37 @@ export interface QuizQuestion {
 /** Phrases to always remove from quiz generation */
 const BANNED_PHRASES = [
   /Alternative Learning System K to 12 Basic Education Curriculum/gi,
-  /ALS K to 12 BEC/gi
+  /ALS K to 12 BEC/gi,
+  /ALS K to 12/gi,
+];
+
+/** Patterns to remove from quiz content */
+const REMOVE_PATTERNS = [
+  // Remove MODULE headers
+  /MODULE\s*\d+\s*:[^.!\n]*/gi,
+  // Remove Lesson headers
+  /Lesson\s*\d+\s*:[^.!\n]*/gi,
+  // Remove HTML tags
+  /<[^>]*>/g,
+  // Remove &nbsp; and other HTML entities
+  /&[a-zA-Z]+;/g,
 ];
 
 function sanitizeContent(input: string): string {
   if (!input) return "";
   let out = input;
-  for (const re of BANNED_PHRASES) out = out.replace(re, "");
+  
+  // Remove banned phrases
+  for (const re of BANNED_PHRASES) {
+    out = out.replace(re, "");
+  }
+  
+  // Remove module/lesson headers and HTML tags
+  for (const re of REMOVE_PATTERNS) {
+    out = out.replace(re, " ");
+  }
+  
+  // Clean up extra whitespace
   return out.replace(/\s{2,}/g, " ").trim();
 }
 
@@ -36,11 +60,26 @@ function getDefaultQuestion(id: number | string): QuizQuestion {
   };
 }
 
+/** Words to exclude from being blanked out */
+const EXCLUDED_WORDS = [
+  "module", "lesson", "chapter", "section", "unit",
+  "that", "this", "with", "from", "have", "been", "were", 
+  "they", "their", "which", "would", "could", "should", 
+  "about", "being", "because", "through", "between",
+  "these", "those", "other", "some", "many", "most",
+  "also", "only", "just", "even", "still", "such"
+];
+
 function generateWrongAnswers(correctWord: string, candidates: string[], max = 3): string[] {
   const out: string[] = [];
   const cleaned = candidates
     .map(w => w.replace(/[^a-zA-Z]/g, ""))
-    .filter(w => w.length > 2 && w.toLowerCase() !== correctWord.toLowerCase());
+    .filter(w => {
+      const lower = w.toLowerCase();
+      return w.length > 3 && 
+             lower !== correctWord.toLowerCase() &&
+             !EXCLUDED_WORDS.includes(lower);
+    });
 
   for (const w of cleaned) {
     if (out.length >= max) break;
@@ -59,10 +98,20 @@ function generateWrongAnswers(correctWord: string, candidates: string[], max = 3
 
 export function generateQuizFromContent(content: string): QuizQuestion {
   const safe = sanitizeContent(content);
+  
   const sentences = safe
     .split(/[.!?]/)
     .map(s => s.trim())
-    .filter(s => s.length > 20 && s.length < 200);
+    .filter(s => {
+      // Filter out sentences that still contain module/lesson references
+      const lower = s.toLowerCase();
+      return s.length > 20 && 
+             s.length < 200 &&
+             !lower.includes("module") &&
+             !lower.includes("lesson") &&
+             !s.includes("<") &&
+             !s.includes(">");
+    });
 
   if (sentences.length === 0) return getDefaultQuestion(Math.random().toString(36));
 
@@ -71,7 +120,12 @@ export function generateQuizFromContent(content: string): QuizQuestion {
   const words = selectedSentence
     .split(/\s+/)
     .map(w => w.replace(/[^a-zA-Z]/g, ""))
-    .filter(w => w.length > 3 && !/^\d+$/.test(w));
+    .filter(w => {
+      const lower = w.toLowerCase();
+      return w.length > 4 && 
+             !/^\d+$/.test(w) &&
+             !EXCLUDED_WORDS.includes(lower);
+    });
 
   if (words.length === 0) return getDefaultQuestion(Math.random().toString(36));
 
@@ -99,7 +153,6 @@ export function generateMultipleQuizQuestions(
   count: number = 5
 ): QuizQuestion[] {
   if (!pages || pages.length === 0) {
-    // return default set of count questions
     const defaults: QuizQuestion[] = [];
     for (let i = 0; i < count; i++) defaults.push(getDefaultQuestion(i));
     return defaults;
@@ -111,7 +164,6 @@ export function generateMultipleQuizQuestions(
     return q;
   });
 
-  // pick unique questions (by question text) and fill to `count`
   const picked: QuizQuestion[] = [];
   const seen = new Set<string>();
   const shuffledPool = shuffleArray(pool);
@@ -131,7 +183,6 @@ export function generateMultipleQuizQuestions(
       picked.push(extra);
       seen.add(extra.question);
     } else {
-      // allow duplicates if no new unique available after attempts
       picked.push(extra);
     }
   }

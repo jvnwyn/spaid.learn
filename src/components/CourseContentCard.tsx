@@ -77,7 +77,11 @@ const CourseContentCard: React.FC<Props> = ({
               <FaChevronRight />
             </button>
           </div>
-          <p className="text-xs text-black leading-relaxed">{content}</p>
+          {/* Render HTML content with dangerouslySetInnerHTML */}
+          <div 
+            className="text-xs text-black leading-relaxed course-content"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
         </div>
 
         {/* Question panel - dynamically generated based on content */}

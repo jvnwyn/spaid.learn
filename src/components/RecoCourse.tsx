@@ -98,7 +98,7 @@ const RecoCourse = () => {
             <>
               <h1 className="text-2xl py-2">{recommended.course_name}</h1>
               <div className="flex flex-col md:flex-row md:h-15 justify-between items-center gap-4 md:gap-0">
-                <h1 className="text-sm w-full md:w-90 text-[#403F3F]">
+                <h1 className="text-sm w-full md:w-120 text-[#403F3F] line-clamp-3 overflow-hidden">
                   {recommended.course_description}
                 </h1>
 
