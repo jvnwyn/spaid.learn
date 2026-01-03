@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 import supabase from "../config/supabaseClient";
 import { extractPdfText } from "../utils/pdfExtractor";
-import MyCourses from "@/components/MyCourses";
 
 const AddCoursePage = () => {
   const [courseName, setCourseName] = useState<string>("");
@@ -14,15 +13,24 @@ const AddCoursePage = () => {
   const [msg, setMsg] = useState<string | null>(null);
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [profileId, setProfileId] = useState<any>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const profile = JSON.parse(sessionStorage.getItem("profile") || "null");
 
+  // Fetch user ID from Supabase Auth directly
   useEffect(() => {
-    if (profile) {
-      setProfileId(profile.id);
-    }
-  }, [profile]);
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+      if (user) {
+        console.log("User ID:", user.id);
+        setProfileId(user.id);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -70,6 +78,11 @@ const AddCoursePage = () => {
       return;
     }
 
+    if (!profileId) {
+      setError("You must be logged in to add a course.");
+      return;
+    }
+
     setLoading(true);
     try {
       let publicUrl: string | null = null;
@@ -109,15 +122,15 @@ const AddCoursePage = () => {
       }
 
       // Insert course record into Supabase, including extracted text
-      const payload: any = {
+      const payload = {
         course_name: courseName.trim(),
         course_description: courseDescription.trim(),
         course_content: extractedText ?? "",
+        course_url: publicUrl,
+        uploader_id: profileId,  // Always include uploader_id
       };
-      if (publicUrl) payload.course_url = publicUrl;
-      if (profileId !== null && profileId !== undefined) {
-        payload.uploader_id = profileId;
-      }
+
+      console.log("Inserting course with payload:", payload);
 
       const { error: insertErr } = await supabase
         .from("course_id")
@@ -131,6 +144,7 @@ const AddCoursePage = () => {
         navigate("/AccountSetting");
       }, 1500);
     } catch (err: any) {
+      console.error("Error adding course:", err);
       setError(err?.message ?? String(err));
     } finally {
       setLoading(false);
@@ -235,9 +249,9 @@ const AddCoursePage = () => {
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !profileId}
               className={`bg-gray-100 px-8 py-2 rounded-lg ${
-                !loading ? "cursor-pointer" : "cursor-progress"
+                !loading && profileId ? "cursor-pointer" : "cursor-not-allowed opacity-50"
               } font-medium text-sm`}
             >
               {loading ? "Saving..." : "Add Course"}
