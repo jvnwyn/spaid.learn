@@ -11,8 +11,8 @@ const LearnersCard = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [token, setToken] = useState<any>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [unfinishedCourses, setUnfinishedCourses] = useState<any[]>([]);
-  const [finishedCourses, setFinishedCourses] = useState<any[]>([]);
+  const [ongoingCount, setOngoingCount] = useState<number>(0);
+  const [completedCount, setCompletedCount] = useState<number>(0);
   const [uploadedCourses, setUploadedCourses] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isInstructor, setIsInstructor] = useState(false);
@@ -40,15 +40,10 @@ const LearnersCard = () => {
             .eq("id", user.id)
             .single();
 
-          console.log("Profile data:", profile);
-
           if (!error && profile && mounted) {
             const userRole = (profile.role ?? "Learner").trim();
             const instructorCheck = userRole.toLowerCase() === "instructor";
-            
-            console.log("Role:", userRole, "Length:", userRole.length);
-            console.log("Is instructor:", instructorCheck);
-            
+
             setRole(userRole);
             setIsInstructor(instructorCheck);
             setUsername(profile.username ?? null);
@@ -72,14 +67,10 @@ const LearnersCard = () => {
     if (!authUser?.id || !isInstructor) return;
 
     const fetchUploadedCourses = async () => {
-      console.log("Fetching uploaded courses for instructor:", authUser.id);
-
       const { data, error } = await supabase
         .from("course_id")
         .select("id")
         .eq("uploader_id", authUser.id);
-
-      console.log("Uploaded courses result:", { data, error, count: data?.length });
 
       if (!error) {
         setUploadedCourses(data?.length ?? 0);
@@ -89,37 +80,44 @@ const LearnersCard = () => {
     fetchUploadedCourses();
   }, [authUser?.id, isInstructor]);
 
-  // Fetch courses for learners
+  // Fetch course counts for learners
   useEffect(() => {
     if (!authUser?.id || isInstructor) return;
 
-    const fetchCourses = async () => {
+    const fetchCourseCounts = async () => {
       try {
-        const { data: finished } = await supabase
-          .from("user_courses")
-          .select(`progress, course_id (id, course_name)`)
-          .eq("user_id", authUser.id)
-          .eq("progress", 100);
+        console.log("Fetching course counts for user:", authUser.id);
 
-        setFinishedCourses(finished || []);
+        // Fetch ALL progress records for this user
+        const { data: allProgress, error: progressError } = await supabase
+          .from("user_course_progress")
+          .select("course_id, completed, percentage")
+          .eq("user_id", authUser.id);
 
-        const { data: unfinished } = await supabase
-          .from("user_courses")
-          .select(`progress, course_id (id, course_name)`)
-          .eq("user_id", authUser.id)
-          .lt("progress", 100);
+        if (progressError) {
+          console.error("Error fetching progress:", progressError);
+          return;
+        }
 
-        setUnfinishedCourses(unfinished || []);
+        console.log("All progress records:", allProgress);
+
+        // Count completed (completed = true)
+        const completed = allProgress?.filter(p => p.completed === true) || [];
+        // Count ongoing (completed = false or null, and has some progress)
+        const ongoing = allProgress?.filter(p => p.completed !== true) || [];
+
+        console.log("Completed courses:", completed.length, completed);
+        console.log("Ongoing courses:", ongoing.length, ongoing);
+
+        setCompletedCount(completed.length);
+        setOngoingCount(ongoing.length);
       } catch (err) {
-        console.error("Error fetching courses:", err);
+        console.error("Error fetching course counts:", err);
       }
     };
 
-    fetchCourses();
+    fetchCourseCounts();
   }, [authUser?.id, isInstructor]);
-
-  // Debug log
-  console.log("Render - loading:", loading, "role:", role, "isInstructor:", isInstructor);
 
   // Skeleton while loading
   if (loading || role === null) {
@@ -173,22 +171,31 @@ const LearnersCard = () => {
         </div>
         <div className="w-3/5 bg-[#f5f5f5] flex flex-col justify-center items-center py-4">
           {isInstructor ? (
-            <div className="w-full flex flex-col justify-center px-4">
-              <h1 className="text-[#403F3F]">Courses Uploaded</h1>
-              <h1 className="text-xl ">{uploadedCourses}</h1>
-            </div>
+            <>
+              <div className="w-full flex flex-col justify-center px-4">
+                <h1 className="text-[#403F3F]">Uploaded Courses</h1>
+                <h1 className="text-xl">{uploadedCourses}</h1>
+              </div>
+              <div className="flex items-center w-4/5 py-3">
+                <hr className="flex-grow border-t border-gray-300" />
+              </div>
+              <div className="w-full flex flex-col justify-center px-4">
+                <h1 className="text-[#403F3F]">Total Students</h1>
+                <h1 className="text-xl">-</h1>
+              </div>
+            </>
           ) : (
             <>
               <div className="w-full flex flex-col justify-center px-4">
                 <h1 className="text-[#403F3F]">Courses Completed</h1>
-                <h1 className="text-xl">{finishedCourses.length}</h1>
+                <h1 className="text-xl">{completedCount}</h1>
               </div>
               <div className="flex items-center w-4/5 py-3">
                 <hr className="flex-grow border-t border-gray-300" />
               </div>
               <div className="w-full flex flex-col justify-center px-4">
                 <h1 className="text-[#403F3F]">Ongoing Courses</h1>
-                <h1 className="text-xl">{unfinishedCourses.length}</h1>
+                <h1 className="text-xl">{ongoingCount}</h1>
               </div>
             </>
           )}
