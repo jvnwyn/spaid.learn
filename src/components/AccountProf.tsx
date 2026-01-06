@@ -325,27 +325,23 @@ const AccountProf = () => {
   if (loading) {
     return (
       <div
-        className="h-95 w-full px-10 md:px-15 lg:px-30 py-20 relative"
+        className="min-h-[420px] md:min-h-[380px] w-full px-4 md:px-15 lg:px-30 py-20 pb-40 md:pb-20 relative"
         aria-busy="true"
       >
         <div className="relative">
           <div className="w-full h-50 bg-gray-200 rounded-md animate-pulse" />
 
-          <div className="absolute bottom-[-90px] h-[120px] w-full flex items-center">
-            <div className="flex flex-col md:flex-row md:items-center w-2/4 gap-5 md:pl-5">
-              <div className="w-[120px] h-[120px] rounded-full bg-gray-200 animate-pulse" />
+          <div className="absolute bottom-[-180px] md:bottom-[-90px] h-auto md:h-[120px] w-full flex flex-col md:flex-row md:items-center">
+            <div className="flex flex-col md:flex-row md:items-center w-full md:w-2/4 gap-3 md:gap-5 md:pl-5">
+              <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 animate-pulse mx-auto md:mx-0" />
 
-              <div className="flex flex-col justify-center gap-2">
+              <div className="flex flex-col items-center md:items-start gap-2">
                 <div className="w-48 h-6 bg-gray-200 rounded animate-pulse" />
-                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
-              </div>
-
-              <div className="ml-4 flex items-center gap-2">
-                <div className="w-28 h-10 bg-gray-200 rounded animate-pulse" />
+                <div className="w-32 h-8 bg-gray-200 rounded animate-pulse" />
               </div>
             </div>
 
-            <div className="w-2/4 h-full flex justify-end items-center">
+            <div className="w-full md:w-2/4 flex justify-center md:justify-end items-center mt-4 md:mt-0">
               <div className="w-30 h-10 bg-gray-200 rounded animate-pulse" />
             </div>
           </div>
@@ -386,7 +382,7 @@ const AccountProf = () => {
         aria-hidden="true"
       />
 
-      <div className="h-95 w-full px-10 md:px-15 lg:px-30 py-20 relative">
+      <div className="min-h-[420px] md:min-h-[380px] w-full px-4 md:px-15 lg:px-30 py-20 pb-40 md:pb-20 relative">
         <div className="relative">
           {/* Cover photo with pallete image */}
           <div
@@ -394,13 +390,12 @@ const AccountProf = () => {
             style={{ backgroundImage: `url(${pallete})` }}
           />
 
-          <div className="absolute bottom-[-90px] h-[120px] w-full flex items-center">
-            <div className="flex flex-col md:flex-row md:items-center w-2/4 gap-5 md:pl-5">
-              <div className="relative">
-                {/* fixed square container ensures perfect circle + clipping */}
-                <div className="w-[120px] h-[120px] rounded-full overflow-hidden">
+          <div className="absolute bottom-[-180px] md:bottom-[-90px] h-auto md:h-[120px] w-full flex flex-col md:flex-row md:items-center">
+            <div className="flex flex-col md:flex-row md:items-center w-full md:w-2/4 gap-3 md:gap-5 md:pl-5">
+              {/* Avatar with camera icon */}
+              <div className="relative mx-auto md:mx-0">
+                <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden">
                   <img
-                    // prefer preview, then profile.avatar_url, then auth metadata avatar, then default
                     src={
                       previewUrl ||
                       profile?.avatar_url ||
@@ -412,62 +407,68 @@ const AccountProf = () => {
                   />
                 </div>
                 {/* camera icon over avatar — shown only in edit mode */}
+                {editing && (
+                  <FaCamera
+                    onClick={onCameraClick}
+                    role="button"
+                    tabIndex={0}
+                    title="Change avatar"
+                    aria-disabled={false}
+                    className="absolute bottom-0 right-0 text-3xl md:text-4xl p-1.5 md:p-2 cursor-pointer text-[#ff9801] bg-white rounded-full shadow-md"
+                  />
+                )}
               </div>
 
-              {!editing ? (
-                <h1 className="md:text-2xl text-xl px-3 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] md:max-w-[300px]">{displayName}</h1>
-              ) : (
-                <input
-                  className="md:text-2xl text-xl px-3 border-b-1 focus:outline-none whitespace-nowrap"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  disabled={saving}
-                  aria-label="Edit display name"
-                />
-              )}
+              {/* Name and Add Course button */}
+              <div className="flex flex-col items-center md:items-start gap-2">
+                {!editing ? (
+                  <h1 className="md:text-2xl text-lg px-3 text-center md:text-left break-words max-w-[280px] md:max-w-[350px]">
+                    {displayName}
+                  </h1>
+                ) : (
+                  <input
+                    className="md:text-2xl text-lg px-3 border-b border-gray-300 focus:outline-none focus:border-[#ff9801] text-center md:text-left w-full max-w-[250px]"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    disabled={saving}
+                    aria-label="Edit display name"
+                  />
+                )}
 
-              {role !== "student" && !editing && (
-                <Link
-                  to="/add-course"
-                  className="ml-2 flex bg-[#ff9801] px-3 md:px-4 justify-center items-center h-8 rounded cursor-pointer text-sm md:text-base whitespace-nowrap"
-                >
-                  Add Course
-                </Link>
-              )}
-              {editing && (
-                <FaCamera
-                  onClick={onCameraClick}
-                  role="button"
-                  tabIndex={0}
-                  title="Change avatar"
-                  aria-disabled={false}
-                  className="absolute bottom-0 w-fit left-27 text-5xl p-2 cursor-pointer text-[#ff9801]"
-                />
-              )}
+                {role !== "student" && !editing && (
+                  <Link
+                    to="/add-course"
+                    className="flex bg-[#ff9801] px-4 justify-center items-center h-8 rounded cursor-pointer text-sm whitespace-nowrap"
+                  >
+                    Add Course
+                  </Link>
+                )}
+              </div>
             </div>
 
-            <div className="w-2/4 h-full flex justify-end items-center">
+            {/* Edit Profile / Save / Cancel buttons */}
+            <div className="w-full md:w-2/4 flex justify-center md:justify-end items-center mt-4 md:mt-0">
               {!editing ? (
                 <button
                   onClick={handleStartEdit}
-                  className="ml-4 flex items-center gap-2 bg-[#ff9801] px-3 h-8 rounded cursor-pointer"
+                  className="flex items-center gap-2 bg-[#ff9801] px-3 h-8 rounded cursor-pointer text-sm md:text-base"
                 >
                   <FaPencilAlt />
                   Edit Profile
                 </button>
               ) : (
-                <div className="ml-4 flex gap-2">
+                <div className="flex gap-2">
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-[#ff9801] cursor-pointer px-3 h-8 rounded"
+                    className="flex items-center gap-2 bg-[#ff9801] cursor-pointer px-3 h-8 rounded text-sm md:text-base"
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
                   <button
                     onClick={handleCancel}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-[#ff0300] cursor-pointer px-3 h-8 rounded"
+                    className="flex items-center gap-2 bg-[#ff0300] cursor-pointer px-3 h-8 rounded text-sm md:text-base"
                   >
                     Cancel
                   </button>

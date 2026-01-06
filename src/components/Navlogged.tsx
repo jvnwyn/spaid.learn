@@ -98,6 +98,12 @@ const Navlogged = () => {
   const firstName = username ? username.split(" ")[0] : "User";
   const role = profileState?.role ?? "Learner";
 
+  // Derive avatar URL with correct fallback chain
+  const avatarUrl =
+    profileState?.avatar_url ||
+    token?.user?.user_metadata?.avatar_url ||
+    Avatar;
+
   // New: derive a robust logged-in flag from session user
   const isLoggedIn = username ? true : false;
 
@@ -146,11 +152,7 @@ const Navlogged = () => {
             className=" h-11 min-w-[160px] rounded-xl bg-[#f5f5f5] cursor-pointer gap-2 flex px-3 justify-between items-center mx-8"
           >
             <img
-              src={
-                profileState?.avatar_url ||
-                token?.user?.user_metadata?.avatar_url ||
-                Avatar
-              }
+              src={avatarUrl}
               alt={profileState?.username ?? "profile"}
               className="w-8 h-8 bg-white rounded-full object-cover"
             />
