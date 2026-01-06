@@ -14,6 +14,13 @@ interface CompletedCourse {
   highest_quiz_score: number | null;
 }
 
+const getScoreColor = (score: number | null): string => {
+  if (score === null) return "text-gray-500";
+  if (score <= 2) return "text-red-500";
+  if (score === 3) return "text-yellow-500";
+  return "text-green-500"; // 4-5
+};
+
 const FinishedCourses: React.FC<Props> = ({ user_id }) => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<CompletedCourse[]>([]);
@@ -121,7 +128,7 @@ const FinishedCourses: React.FC<Props> = ({ user_id }) => {
                 <span className="text-sm hover:underline">
                   {course.course_name}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className={`text-xs font-medium ${getScoreColor(course.highest_quiz_score)}`}>
                   {course.highest_quiz_score !== null
                     ? `Best: ${course.highest_quiz_score}/5`
                     : "No score"}
