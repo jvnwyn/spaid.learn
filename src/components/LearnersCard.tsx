@@ -194,13 +194,6 @@ const LearnersCard = () => {
                 <h1 className="text-[#403F3F]">Uploaded Courses</h1>
                 <h1 className="text-xl">{uploadedCourses}</h1>
               </div>
-              <div className="flex items-center w-4/5 py-3">
-                <hr className="flex-grow border-t border-gray-300" />
-              </div>
-              <div className="w-full flex flex-col justify-center px-4">
-                <h1 className="text-[#403F3F]">Total Students</h1>
-                <h1 className="text-xl">-</h1>
-              </div>
             </>
           ) : (
             <>

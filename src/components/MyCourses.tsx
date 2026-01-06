@@ -1,123 +1,114 @@
-import React, { useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import supabase from "../config/supabaseClient";
-import { Link } from "react-router-dom";
 
-type Course = {
+interface MyCoursesProps {
+  uploader_id: string | null;
+}
+
+interface Course {
   id: string;
-  course_name?: string | null;
-  uploader_id?: string | null;
-};
+  course_name: string;
+  course_description: string;
+  created_at: string;
+}
 
-const MyCourses: React.FC<{ uploader_id?: string | null }> = ({
-  uploader_id,
-}) => {
+const MyCourses: React.FC<MyCoursesProps> = ({ uploader_id }) => {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      if (!uploader_id) {
-        setCourses([]);
-        setLoading(false);
-        return;
-      }
+    if (!uploader_id) {
+      console.log("No uploader_id provided");
+      setLoading(false);
+      return;
+    }
 
+    const fetchMyCourses = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const { data, error } = await supabase
-          .from("course_id")
-          .select("id, course_name, uploader_id")
-          .eq("uploader_id", uploader_id)
-          .limit(50);
+      
+      console.log("Fetching courses for uploader_id:", uploader_id);
 
-        if (error) throw error;
-        if (!mounted) return;
-        setCourses((data as Course[]) ?? []);
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message ?? String(e));
+      const { data, error: fetchError } = await supabase
+        .from("course_id")
+        .select("id, course_name, course_description, created_at")
+        .eq("uploader_id", uploader_id)
+        .order("created_at", { ascending: false });
+
+      console.log("Fetched courses:", data);
+      console.log("Fetch error:", fetchError);
+
+      if (fetchError) {
+        console.error("Error fetching courses:", fetchError);
+        setError(fetchError.message);
         setCourses([]);
-      } finally {
-        if (mounted) setLoading(false);
+      } else {
+        setCourses(data || []);
       }
+      setLoading(false);
     };
 
-    load();
-    return () => {
-      mounted = false;
-    };
+    fetchMyCourses();
   }, [uploader_id]);
 
-  const displayedCourses = expanded ? courses : courses.slice(0, 3);
+  const handleViewCourse = (courseId: string) => {
+    navigate(`/course/${courseId}`);
+  };
 
   if (loading) {
     return (
-      <div className="flex-1 px-3 flex flex-col">
-        <div className="flex justify-between items-center mb-3">
-          <h1 className="text-base font-medium text-gray-700">My Courses</h1>
-        </div>
-        <div className="flex flex-col gap-3 text-sm md:text-base">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"
-            >
-              <div className="w-1.5 h-14 bg-gray-200 rounded-l-lg animate-pulse"></div>
-              <div className="px-4 py-3 flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
-              </div>
-            </div>
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">My Uploaded Courses</h2>
+        <div className="flex flex-col gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">My Uploaded Courses</h2>
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 px-3 flex flex-col">
-      <div className="flex justify-between items-center mb-3">
-        <h1 className="text-base font-medium text-gray-700">My Courses</h1>
-        {courses.length > 3 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-[#013F5E] flex items-center gap-1 text-sm hover:underline cursor-pointer"
-          >
-            {expanded ? "See Less" : "See More"}{" "}
-            {expanded ? (
-              <FaChevronUp className="text-xs" />
-            ) : (
-              <FaChevronDown className="text-xs" />
-            )}
-          </button>
-        )}
-      </div>
-      <div className="flex flex-col gap-3 text-sm md:text-base">
-        {error ? (
-          <p className="text-sm text-red-600">Error loading courses: {error}</p>
-        ) : courses.length === 0 ? (
-          <p className="text-gray-500">
-            You have not uploaded any courses yet.
-          </p>
-        ) : (
-          displayedCourses.map((c) => (
-            <Link
-              key={c.id}
-              to={`/course/${c.id}`}
-              className="flex items-center bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-semibold">My Uploaded Courses</h2>
+      
+      {courses.length === 0 ? (
+        <p className="text-gray-500">You haven't uploaded any courses yet.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {courses.map((course) => (
+            <div
+              key={course.id}
+              className="flex justify-between items-center p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
             >
-              <div className="w-1.5 h-14 bg-[#ff9801] rounded-l-lg"></div>
-              <div className="px-4 py-3 uppercase text-sm font-medium text-gray-700">
-                {c.course_name ?? "Untitled course"}
+              <div className="flex-1">
+                <h3 className="font-medium">{course.course_name}</h3>
+                <p className="text-sm text-gray-500 line-clamp-1">
+                  {course.course_description}
+                </p>
               </div>
-            </Link>
-          ))
-        )}
-      </div>
+              <button
+                onClick={() => handleViewCourse(course.id)}
+                className="ml-4 px-4 py-2 text-sm bg-[#ff9801] text-white rounded-lg hover:bg-[#e88a00] transition-colors"
+              >
+                View
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

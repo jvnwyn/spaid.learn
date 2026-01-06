@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { FaChevronDown } from "react-icons/fa";
 import MyCourses from "./MyCourses";
 import UnfinishedCourses from "./UnfinishedCourses";
 import FinishedCourses from "./FinishedCourses";
@@ -36,6 +35,7 @@ const AccountSettCourses: React.FC = () => {
         if (profileErr) console.error("profile fetch error:", profileErr);
         console.debug("profileData:", profileData);
         const fetchedRole = (profileData as any)?.role ?? null;
+        console.log("Fetched role:", fetchedRole); // Debug log
         if (mounted) setRole(fetchedRole);
       } catch (err) {
         console.error("AccountSettCourses load error:", err);
@@ -47,6 +47,9 @@ const AccountSettCourses: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  // Debug log
+  console.log("Current state - role:", role, "userId:", userId, "loading:", loading);
 
   if (loading) {
     return (
@@ -72,22 +75,33 @@ const AccountSettCourses: React.FC = () => {
     );
   }
 
+  // Check role case-insensitively
+  const isInstructor = role?.toLowerCase() === "instructor";
+  const isStudent = role?.toLowerCase() === "student";
+
   return (
     <div className="p-8 md:px-15 lg:px-30">
-      <div className="w-full gap-5 md:gap-10  flex flex-col justify-between rounded-xl md:p-5">
-        {role === "instructor" && <MyCourses uploader_id={userId} />}
-
-        {role === "instructor" && (
-          <div className="block h-[1px] md:h-auto md:my-5 md:w-[2px] bg-gray-300 mx-2"></div>
+      <div className="w-full gap-5 md:gap-10 flex flex-col justify-between rounded-xl md:p-5">
+        {isInstructor && (
+          <>
+            <MyCourses uploader_id={userId} />
+          </>
         )}
 
-        {role == "student" && (
+        {isStudent && (
           <div>
             <UnfinishedCourses user_id={userId} />
 
             <div className="block h-[1px] md:h-auto md:my-5 md:w-[2px] bg-gray-300 mx-2"></div>
 
             <FinishedCourses user_id={userId} />
+          </div>
+        )}
+
+        {!isInstructor && !isStudent && (
+          <div className="text-center text-gray-500 py-8">
+            <p>No role assigned. Please contact support.</p>
+            <p className="text-sm mt-2">Debug: role = "{role}"</p>
           </div>
         )}
       </div>
