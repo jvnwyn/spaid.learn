@@ -94,9 +94,17 @@ const Navlogged = () => {
   const firstName = username ? username.split(" ")[0] : "User";
   const role = profileState?.role ?? "Learner";
 
-  // Get avatar URL from profile or token
+  // Get avatar URL - check multiple possible locations
+  // 1. Custom uploaded avatar in profiles table
+  // 2. Google avatar from user_metadata
+  // 3. Google avatar from identities array (alternative location)
   const avatarUrl =
-    profileState?.avatar_url || token?.user?.user_metadata?.avatar_url || null;
+    profileState?.avatar_url ||
+    token?.user?.user_metadata?.avatar_url ||
+    token?.user?.user_metadata?.picture ||
+    token?.user?.identities?.[0]?.identity_data?.avatar_url ||
+    token?.user?.identities?.[0]?.identity_data?.picture ||
+    null;
 
   // Get first letter for fallback avatar
   const firstLetter = firstName ? firstName.charAt(0).toUpperCase() : "U";
@@ -153,6 +161,7 @@ const Navlogged = () => {
                 src={avatarUrl}
                 alt={profileState?.username ?? "profile"}
                 className="w-8 h-8 rounded-full object-cover"
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-[#9c27b0] flex items-center justify-center text-white font-semibold text-sm">
