@@ -8,7 +8,6 @@ type Course = {
   course_name: string;
   course_description: string;
   course_url?: string | null;
-  // ...other columns if present...
 };
 
 const RecoCourse = () => {
@@ -25,7 +24,7 @@ const RecoCourse = () => {
       const { data, error } = await supabase
         .from("course_id")
         .select("*")
-        .order("id", { ascending: true }); // adjust ordering as needed
+        .order("id", { ascending: true });
       if (error) {
         setError(error.message);
         setCourses([]);
@@ -33,7 +32,6 @@ const RecoCourse = () => {
       } else {
         const items = (data as Course[]) || [];
         setCourses(items);
-        // pick a random recommended course once after load
         if (items.length > 0) {
           const randIndex = Math.floor(Math.random() * items.length);
           setRecommended(items[randIndex]);
@@ -59,7 +57,6 @@ const RecoCourse = () => {
         return;
       }
 
-      // upsert a minimal progress record so Continue Learning will show
       await supabase.from("user_course_progress").upsert(
         {
           user_id: user.id,
@@ -80,15 +77,15 @@ const RecoCourse = () => {
   };
 
   return (
-    <div className="w-full flex flex-col px-4 md:px-20 pt-8 md:pt-28 gap-5 ">
+    <div className="w-full flex flex-col px-4 md:px-20 pt-8 md:pt-28 gap-5">
       {loading ? (
         <div className="w-full max-w-[880px] h-auto md:h-[170px] bg-[#f5f5f5] rounded-2xl p-4 flex items-center justify-center mx-auto">
           <span className="text-sm text-gray-600">Loading...</span>
         </div>
       ) : (
-        // bg-gradient-to-br from-[#ff9801] via-[#ff9801] to-[#ff0300]
         <div
-          className={`w-full max-w-[880px] h-auto md:h-[170px] bg-[#f5f5f5] rounded-2xl p-4 flex flex-col justify-center mx-auto bg-[url('../../public/pallete.png')]  bg-cover bg-center`}
+          className="w-full max-w-[880px] h-auto md:h-[170px] bg-[#f5f5f5] rounded-2xl p-4 flex flex-col justify-center mx-auto bg-cover bg-center"
+          style={{ backgroundImage: `url(${pallete})` }}
         >
           <h1 className="text-[#403F3F]">Recommended Course</h1>
 
@@ -102,10 +99,9 @@ const RecoCourse = () => {
                   {recommended.course_description}
                 </h1>
 
-                {/* use button so we can create progress before navigating */}
                 <button
                   onClick={() => handleStartLearning(recommended.id)}
-                  className=" w-full md:w-50 h-10  flex justify-center items-center rounded-xl cursor-pointer mt-2 md:mt-0 bg-[#ff9801]"
+                  className="w-full md:w-50 h-10 flex justify-center items-center rounded-xl cursor-pointer mt-2 md:mt-0 bg-[#ff9801]"
                 >
                   Start Learning Now
                 </button>
