@@ -14,38 +14,26 @@ interface Profile {
 }
 
 const AccountProf = () => {
-  // auth user from Supabase (safer than reading sessionStorage)
   const [authUser, setAuthUser] = useState<any>(null);
-
-  // profile state
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<string>("Learner");
-
-  // loading state for skeleton
   const [loading, setLoading] = useState<boolean>(true);
-
-  // edit UI state
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState<string>("");
-  // keep original value to revert on cancel
   const originalNameRef = useRef<string | null>(null);
-  // file input ref for avatar upload
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // local selected file and preview
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // popup state for top notifications
   const [popup, setPopup] = useState<{
     visible: boolean;
     text: string;
     type: "success" | "error";
   }>({ visible: false, text: "", type: "success" });
 
-  // show popup when msg or error changes
   useEffect(() => {
     if (!msg && !error) return;
     const text = error ?? msg ?? "";
@@ -72,7 +60,6 @@ const AccountProf = () => {
         setAuthUser(user);
 
         if (user?.id) {
-          // request both username, role and avatar_url; maybeSingle avoids throw when not found
           const { data: profData, error: profError } = await supabase
             .from("profiles")
             .select("username, role, created_at, avatar_url")
@@ -86,11 +73,19 @@ const AccountProf = () => {
             setProfile(prof);
             setRole(prof?.role ?? "Learner");
 
-            // prefer profile.username, then auth metadata full_name/name
             const displayFromProfile = prof?.username ?? null;
             const displayFromMeta =
               user.user_metadata?.full_name || user.user_metadata?.name || null;
             setNameInput(displayFromProfile ?? displayFromMeta ?? "");
+
+            // Sync profile to sessionStorage so Navlogged gets the avatar_url
+            if (prof) {
+              const profileToStore = { ...prof, id: user.id };
+              sessionStorage.setItem("profile", JSON.stringify(profileToStore));
+              window.dispatchEvent(
+                new CustomEvent("profile_updated", { detail: profileToStore })
+              );
+            }
           }
         }
       } catch (err) {
@@ -108,7 +103,6 @@ const AccountProf = () => {
   const handleStartEdit = () => {
     setError(null);
     setMsg(null);
-    // snapshot current displayed name so cancel can revert reliably
     originalNameRef.current =
       profile?.username ||
       authUser?.user_metadata?.full_name ||
@@ -118,7 +112,6 @@ const AccountProf = () => {
   };
 
   const handleCancel = () => {
-    // revert nameInput to the original snapshot (fallback to profile/auth meta)
     const original = originalNameRef.current;
     if (original !== null) {
       setNameInput(original);
@@ -131,7 +124,6 @@ const AccountProf = () => {
       setNameInput(displayFromProfile ?? displayFromMeta ?? "");
     }
 
-    // discard any selected avatar preview and clear snapshot/UI state
     if (previewUrl) {
       try {
         URL.revokeObjectURL(previewUrl);
@@ -164,13 +156,12 @@ const AccountProf = () => {
     setLoading(true);
     setSaving(true);
     try {
-      // if a new avatar was selected, upload it first and get the public URL
       let avatarUrl: string | undefined = undefined;
       if (selectedFile) {
         try {
           const ext = selectedFile.name.split(".").pop();
           const filePath = `${authUser.id}/${Date.now()}.${ext}`;
-          const { data: uploadData, error: uploadErr } = await supabase.storage
+          const { error: uploadErr } = await supabase.storage
             .from("Avatar")
             .upload(filePath, selectedFile, { upsert: true });
           if (uploadErr) throw uploadErr;
@@ -187,7 +178,6 @@ const AccountProf = () => {
       const { data: upserted, error: upsertErr } = await supabase
         .from("profiles")
         .upsert(
-          // include avatar_url when available
           [
             {
               id: authUser.id,
@@ -195,9 +185,9 @@ const AccountProf = () => {
               ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
             },
           ],
-          { onConflict: "id" } // valid option in v2
+          { onConflict: "id" }
         )
-        .select("id, username, role, created_at")
+        .select("id, username, role, created_at, avatar_url")
         .maybeSingle();
 
       if (upsertErr) throw upsertErr;
@@ -205,76 +195,53 @@ const AccountProf = () => {
       setProfile(upserted ?? null);
       setRole(upserted?.role ?? role);
 
+      // Update auth metadata with both name and avatar
       const { error: authErr } = await supabase.auth.updateUser({
-        data: { full_name: newName },
+        data: {
+          full_name: newName,
+          avatar_url: avatarUrl || profile?.avatar_url || authUser?.user_metadata?.avatar_url,
+        },
       });
       if (authErr) throw authErr;
 
-      // After successful update, update the sessionStorage profile immediately
+      // Update sessionStorage and dispatch event for Navlogged
+      const updatedProfile = {
+        id: authUser.id,
+        username: newName,
+        role: upserted?.role ?? role,
+        avatar_url: avatarUrl || upserted?.avatar_url || profile?.avatar_url,
+        created_at: upserted?.created_at,
+      };
+      sessionStorage.setItem("profile", JSON.stringify(updatedProfile));
+      window.dispatchEvent(
+        new CustomEvent("profile_updated", { detail: updatedProfile })
+      );
+
+      // Also update token in sessionStorage with new avatar
       try {
-        // merge with existing profile if present
-        const existing =
-          JSON.parse(sessionStorage.getItem("profile") || "null") || {};
-        const updatedProfile = {
-          ...existing,
-          id: authUser.id,
-          username: newName,
-          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
-        };
-
-        // ensure id is present (DB may return data array/object depending on upsert)
-        if (upserted) {
-          const returned = Array.isArray(upserted) ? upserted[0] : upserted;
-          if (returned && typeof returned === "object") {
-            Object.assign(updatedProfile, returned);
-          }
+        const existingToken = JSON.parse(sessionStorage.getItem("token") || "null");
+        if (existingToken?.user?.user_metadata) {
+          existingToken.user.user_metadata.full_name = newName;
+          existingToken.user.user_metadata.avatar_url =
+            avatarUrl || profile?.avatar_url || existingToken.user.user_metadata.avatar_url;
+          sessionStorage.setItem("token", JSON.stringify(existingToken));
+          window.dispatchEvent(
+            new CustomEvent("token_updated", { detail: existingToken })
+          );
         }
-
-        sessionStorage.setItem("profile", JSON.stringify(updatedProfile));
-        // notify same-tab listeners (Navlogged listens for this)
-        window.dispatchEvent(
-          new CustomEvent("profile_updated", { detail: updatedProfile })
-        );
       } catch (e) {
-        // ...optional: handle sessionStorage errors silently...
+        /* ignore */
       }
 
       setMsg("Profile saved");
 
-      // refresh profile (include avatar_url) and persist updated profile to sessionStorage
-      const { data: refreshedProfData, error: refreshedErr } = await supabase
-        .from("profiles")
-        .select("username, role, created_at, avatar_url")
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (refreshedErr) throw refreshedErr;
-
-      const refreshedProf = (refreshedProfData ?? null) as Profile | null;
-      setProfile(refreshedProf);
-      setRole(refreshedProf?.role ?? "Learner");
-
-      try {
-        if (refreshedProf) {
-          sessionStorage.setItem("profile", JSON.stringify(refreshedProf));
-          window.dispatchEvent(
-            new CustomEvent("profile_updated", { detail: refreshedProf })
-          );
-        }
-      } catch (e) {
-        /* ignore sessionStorage errors */
-      }
-
-      // clear preview/selected file after successful save
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
       setSelectedFile(null);
-
       setEditing(false);
 
-      // optional: refresh auth user locally
       const refreshedUserRes = await supabase.auth.getUser();
       setAuthUser(refreshedUserRes.data?.user ?? authUser);
     } catch (err: any) {
@@ -286,42 +253,42 @@ const AccountProf = () => {
     }
   };
 
-  // open file picker when camera clicked (only in edit mode)
   const onCameraClick = () => {
     if (!editing || !fileInputRef.current) return;
-    fileInputRef.current.value = ""; // reset
+    fileInputRef.current.value = "";
     fileInputRef.current.click();
   };
 
-  // handle file selection (preview only) — do not upload yet
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // revoke previous preview if any
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     const url = URL.createObjectURL(file);
     setSelectedFile(file);
     setPreviewUrl(url);
-    // don't upload yet; upload will happen on Save
   };
 
-  // cleanup preview URL on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  // add missing displayName used in JSX
   const displayName =
     profile?.username ??
     authUser?.user_metadata?.full_name ??
     authUser?.user_metadata?.name ??
     nameInput;
 
-  // render skeleton while loading initial data
+  // Avatar URL with proper fallback
+  const avatarUrl =
+    previewUrl ||
+    profile?.avatar_url ||
+    authUser?.user_metadata?.avatar_url ||
+    Avatarcard;
+
   if (loading) {
     return (
       <div
@@ -330,17 +297,14 @@ const AccountProf = () => {
       >
         <div className="relative">
           <div className="w-full h-50 bg-gray-200 rounded-md animate-pulse" />
-
           <div className="absolute bottom-[-180px] md:bottom-[-90px] h-auto md:h-[120px] w-full flex flex-col md:flex-row md:items-center">
             <div className="flex flex-col md:flex-row md:items-center w-full md:w-2/4 gap-3 md:gap-5 md:pl-5">
               <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 animate-pulse mx-auto md:mx-0" />
-
               <div className="flex flex-col items-center md:items-start gap-2">
                 <div className="w-48 h-6 bg-gray-200 rounded animate-pulse" />
                 <div className="w-32 h-8 bg-gray-200 rounded animate-pulse" />
               </div>
             </div>
-
             <div className="w-full md:w-2/4 flex justify-center md:justify-end items-center mt-4 md:mt-0">
               <div className="w-30 h-10 bg-gray-200 rounded animate-pulse" />
             </div>
@@ -352,7 +316,6 @@ const AccountProf = () => {
 
   return (
     <>
-      {/* Top popup */}
       {popup.visible && (
         <div
           role="status"
@@ -372,7 +335,6 @@ const AccountProf = () => {
         </div>
       )}
 
-      {/* hidden file input for avatar change */}
       <input
         ref={fileInputRef}
         type="file"
@@ -384,7 +346,6 @@ const AccountProf = () => {
 
       <div className="min-h-[420px] md:min-h-[380px] w-full px-4 md:px-15 lg:px-30 py-20 pb-40 md:pb-20 relative">
         <div className="relative">
-          {/* Cover photo with pallete image */}
           <div
             className="w-full h-50 rounded-md bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${pallete})` }}
@@ -392,57 +353,52 @@ const AccountProf = () => {
 
           <div className="absolute bottom-[-180px] md:bottom-[-90px] h-auto md:h-[120px] w-full flex flex-col md:flex-row md:items-center">
             <div className="flex flex-col md:flex-row md:items-center w-full md:w-2/4 gap-3 md:gap-5 md:pl-5">
-              {/* Avatar with camera icon */}
+              {/* Avatar */}
               <div className="relative mx-auto md:mx-0">
                 <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden">
                   <img
-                    src={
-                      previewUrl ||
-                      profile?.avatar_url ||
-                      authUser?.user_metadata?.avatar_url ||
-                      Avatarcard
-                    }
-                    alt="Pfp"
+                    src={avatarUrl}
+                    alt="Profile"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                {/* camera icon over avatar — shown only in edit mode */}
                 {editing && (
                   <FaCamera
                     onClick={onCameraClick}
                     role="button"
                     tabIndex={0}
                     title="Change avatar"
-                    aria-disabled={false}
                     className="absolute bottom-0 right-0 text-3xl md:text-4xl p-1.5 md:p-2 cursor-pointer text-[#ff9801] bg-white rounded-full shadow-md"
                   />
                 )}
               </div>
 
-              {/* Name and Add Course button */}
+              {/* Name and Add Course - side by side */}
               <div className="flex flex-col items-center md:items-start gap-2">
-                {!editing ? (
-                  <h1 className="md:text-2xl text-lg px-3 text-center md:text-left break-words max-w-[280px] md:max-w-[350px]">
-                    {displayName}
-                  </h1>
-                ) : (
-                  <input
-                    className="md:text-2xl text-lg px-3 border-b border-gray-300 focus:outline-none focus:border-[#ff9801] text-center md:text-left w-full max-w-[250px]"
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    disabled={saving}
-                    aria-label="Edit display name"
-                  />
-                )}
+                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+                  {!editing ? (
+                    <h1 className="md:text-2xl text-lg text-center md:text-left">
+                      {displayName}
+                    </h1>
+                  ) : (
+                    <input
+                      className="md:text-2xl text-lg px-3 border-b border-gray-300 focus:outline-none focus:border-[#ff9801] text-center md:text-left w-full max-w-[250px]"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      disabled={saving}
+                      aria-label="Edit display name"
+                    />
+                  )}
 
-                {role !== "student" && !editing && (
-                  <Link
-                    to="/add-course"
-                    className="flex bg-[#ff9801] px-4 justify-center items-center h-8 rounded cursor-pointer text-sm whitespace-nowrap"
-                  >
-                    Add Course
-                  </Link>
-                )}
+                  {role !== "student" && !editing && (
+                    <Link
+                      to="/add-course"
+                      className="flex bg-[#ff9801] px-4 justify-center items-center h-8 rounded cursor-pointer text-sm whitespace-nowrap"
+                    >
+                      Add Course
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
 
