@@ -415,10 +415,10 @@ const AccountProf = () => {
               </div>
 
               {!editing ? (
-                <h1 className="md:text-2xl text-xl px-3">{displayName}</h1>
+                <h1 className="md:text-2xl text-xl px-3 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] md:max-w-[300px]">{displayName}</h1>
               ) : (
                 <input
-                  className="md:text-2xl text-xl px-3 border-b-1 focus:outline-none"
+                  className="md:text-2xl text-xl px-3 border-b-1 focus:outline-none whitespace-nowrap"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
                   disabled={saving}
@@ -429,7 +429,7 @@ const AccountProf = () => {
               {role !== "student" && !editing && (
                 <Link
                   to="/add-course"
-                  className="ml-2 flex bg-[#ff9801] w-30 justify-center items-center h-8 rounded cursor-pointer"
+                  className="ml-2 flex bg-[#ff9801] px-3 md:px-4 justify-center items-center h-8 rounded cursor-pointer text-sm md:text-base whitespace-nowrap"
                 >
                   Add Course
                 </Link>
