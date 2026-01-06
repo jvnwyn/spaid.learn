@@ -93,34 +93,24 @@ const Review = () => {
     <div className="w-full flex flex-col px-4 md:px-20 pt-5 gap-5">
       <div className="w-full max-w-[880px] h-auto bg-white rounded-2xl p-4 flex flex-col justify-center gap-2 mx-auto">
         <h1>Reviewer</h1>
-        <div className="w-full flex flex-col md:flex-row justify-between items-stretch gap-4">
+        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
           {displayCourses.map((course) => (
             <button
               key={course.course_id}
               onClick={() => handleReviewClick(course.course_id)}
               style={{ backgroundImage: `url(${pallete})` }}
-              className="flex-1 min-w-0 h-24 md:h-28 rounded-xl flex justify-center items-center shadow-sm bg-cover bg-center hover:shadow-md transition-shadow cursor-pointer"
+              className="w-full h-28 rounded-xl flex justify-center items-center shadow-sm bg-cover bg-center hover:shadow-md transition-shadow cursor-pointer px-4"
             >
-              <span
-                className="text-white text-sm text-center font-semibold px-3 w-full"
-                style={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  wordBreak: "break-word",
-                }}
-              >
+              <p className="text-white text-sm text-center font-semibold line-clamp-2">
                 {course.course_name || "Untitled Course"}
-              </span>
+              </p>
             </button>
           ))}
           {displayCourses.length < 3 &&
             Array.from({ length: 3 - displayCourses.length }).map((_, index) => (
               <div
                 key={`empty-${index}`}
-                className="flex-1 min-w-0 h-24 md:h-28 rounded-xl flex justify-center items-center bg-gray-200 opacity-40"
+                className="w-full h-28 rounded-xl flex justify-center items-center bg-gray-200 opacity-40"
               >
                 <span className="text-gray-500 text-sm text-center">
                   Empty slot
