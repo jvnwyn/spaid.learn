@@ -66,9 +66,7 @@ const AccountProf = () => {
             .eq("id", user.id)
             .maybeSingle();
 
-          if (profError) {
-            console.error("fetch profile error:", profError);
-          } else if (mounted) {
+          if (!profError && mounted) {
             const prof = (profData ?? null) as Profile | null;
             setProfile(prof);
             setRole(prof?.role ?? "Learner");
@@ -88,8 +86,8 @@ const AccountProf = () => {
             }
           }
         }
-      } catch (err) {
-        console.error("AccountProf load error:", err);
+      } catch {
+        // silently handle error
       } finally {
         if (mounted) setLoading(false);
       }
@@ -127,7 +125,7 @@ const AccountProf = () => {
     if (previewUrl) {
       try {
         URL.revokeObjectURL(previewUrl);
-      } catch (e) {
+      } catch {
         /* ignore */
       }
     }
@@ -156,23 +154,19 @@ const AccountProf = () => {
     setLoading(true);
     setSaving(true);
     try {
-      let avatarUrl: string | undefined = undefined;
+      let newAvatarUrl: string | undefined = undefined;
       if (selectedFile) {
-        try {
-          const ext = selectedFile.name.split(".").pop();
-          const filePath = `${authUser.id}/${Date.now()}.${ext}`;
-          const { error: uploadErr } = await supabase.storage
-            .from("Avatar")
-            .upload(filePath, selectedFile, { upsert: true });
-          if (uploadErr) throw uploadErr;
-          const { data: urlData } = supabase.storage
-            .from("Avatar")
-            .getPublicUrl(filePath);
-          avatarUrl = (urlData as any)?.publicUrl;
-          if (!avatarUrl) throw new Error("Failed to get public URL");
-        } catch (uploadErr) {
-          throw uploadErr;
-        }
+        const ext = selectedFile.name.split(".").pop();
+        const filePath = `${authUser.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("Avatar")
+          .upload(filePath, selectedFile, { upsert: true });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("Avatar")
+          .getPublicUrl(filePath);
+        newAvatarUrl = (urlData as any)?.publicUrl;
+        if (!newAvatarUrl) throw new Error("Failed to get public URL");
       }
 
       const { data: upserted, error: upsertErr } = await supabase
@@ -182,7 +176,7 @@ const AccountProf = () => {
             {
               id: authUser.id,
               username: newName,
-              ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+              ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
             },
           ],
           { onConflict: "id" }
@@ -195,11 +189,15 @@ const AccountProf = () => {
       setProfile(upserted ?? null);
       setRole(upserted?.role ?? role);
 
+      // Determine final avatar URL
+      const finalAvatarUrl =
+        newAvatarUrl || upserted?.avatar_url || profile?.avatar_url || authUser?.user_metadata?.avatar_url;
+
       // Update auth metadata with both name and avatar
       const { error: authErr } = await supabase.auth.updateUser({
         data: {
           full_name: newName,
-          avatar_url: avatarUrl || profile?.avatar_url || authUser?.user_metadata?.avatar_url,
+          avatar_url: finalAvatarUrl,
         },
       });
       if (authErr) throw authErr;
@@ -209,7 +207,7 @@ const AccountProf = () => {
         id: authUser.id,
         username: newName,
         role: upserted?.role ?? role,
-        avatar_url: avatarUrl || upserted?.avatar_url || profile?.avatar_url,
+        avatar_url: finalAvatarUrl,
         created_at: upserted?.created_at,
       };
       sessionStorage.setItem("profile", JSON.stringify(updatedProfile));
@@ -219,17 +217,18 @@ const AccountProf = () => {
 
       // Also update token in sessionStorage with new avatar
       try {
-        const existingToken = JSON.parse(sessionStorage.getItem("token") || "null");
+        const existingToken = JSON.parse(
+          sessionStorage.getItem("token") || "null"
+        );
         if (existingToken?.user?.user_metadata) {
           existingToken.user.user_metadata.full_name = newName;
-          existingToken.user.user_metadata.avatar_url =
-            avatarUrl || profile?.avatar_url || existingToken.user.user_metadata.avatar_url;
+          existingToken.user.user_metadata.avatar_url = finalAvatarUrl;
           sessionStorage.setItem("token", JSON.stringify(existingToken));
           window.dispatchEvent(
             new CustomEvent("token_updated", { detail: existingToken })
           );
         }
-      } catch (e) {
+      } catch {
         /* ignore */
       }
 
@@ -245,7 +244,6 @@ const AccountProf = () => {
       const refreshedUserRes = await supabase.auth.getUser();
       setAuthUser(refreshedUserRes.data?.user ?? authUser);
     } catch (err: any) {
-      console.error("Save failed", err);
       setError(err?.message ?? "Save failed");
     } finally {
       setSaving(false);
@@ -354,7 +352,7 @@ const AccountProf = () => {
           <div className="absolute bottom-[-180px] md:bottom-[-90px] h-auto md:h-[120px] w-full flex flex-col md:flex-row md:items-center">
             <div className="flex flex-col md:flex-row md:items-center w-full md:w-2/4 gap-3 md:gap-5 md:pl-5">
               {/* Avatar */}
-              <div className="relative mx-auto md:mx-0">
+              <div className="relative mx-auto md:mx-0 flex-shrink-0">
                 <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden">
                   <img
                     src={avatarUrl}
@@ -373,32 +371,31 @@ const AccountProf = () => {
                 )}
               </div>
 
-              {/* Name and Add Course - side by side */}
+              {/* Name and Add Course - side by side on desktop, stacked on mobile */}
               <div className="flex flex-col items-center md:items-start gap-2">
-                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
-                  {!editing ? (
-                    <h1 className="md:text-2xl text-lg text-center md:text-left">
+                {!editing ? (
+                  <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+                    <h1 className="md:text-2xl text-lg text-center md:text-left whitespace-nowrap">
                       {displayName}
                     </h1>
-                  ) : (
-                    <input
-                      className="md:text-2xl text-lg px-3 border-b border-gray-300 focus:outline-none focus:border-[#ff9801] text-center md:text-left w-full max-w-[250px]"
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      disabled={saving}
-                      aria-label="Edit display name"
-                    />
-                  )}
-
-                  {role !== "student" && !editing && (
-                    <Link
-                      to="/add-course"
-                      className="flex bg-[#ff9801] px-4 justify-center items-center h-8 rounded cursor-pointer text-sm whitespace-nowrap"
-                    >
-                      Add Course
-                    </Link>
-                  )}
-                </div>
+                    {role !== "student" && (
+                      <Link
+                        to="/add-course"
+                        className="flex bg-[#ff9801] px-4 justify-center items-center h-8 rounded cursor-pointer text-sm whitespace-nowrap"
+                      >
+                        Add Course
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    className="md:text-2xl text-lg px-3 border-b border-gray-300 focus:outline-none focus:border-[#ff9801] text-center md:text-left w-full max-w-[250px]"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    disabled={saving}
+                    aria-label="Edit display name"
+                  />
+                )}
               </div>
             </div>
 
