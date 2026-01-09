@@ -112,7 +112,7 @@ const CourseHeader = ({ courseId }: { courseId: string | number }) => {
 
   return (
     <div>
-      <div className="bg-[#F5F5F5] rounded-xl p-7 flex flex-col gap-8 justify-between items-start bg-[url('../../public/pallete.png')]  bg-cover bg-center ">
+      <div className=" rounded-xl p-7 flex flex-col gap-8 justify-between items-start bg-[url('../../public/pallete.png')]  bg-cover bg-center ">
         <div>
           <div className="text-xl md:text-2xl font-medium mb-2">
             {course.course_name}
